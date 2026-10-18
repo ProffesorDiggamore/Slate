@@ -34,8 +34,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         navigateFallback: '/index.html',
-        // Never cache GitHub API traffic.
-        navigateFallbackDenylist: [/^\/api/],
+        // Never cache GitHub API traffic, and let the standalone pages load as themselves.
+        navigateFallbackDenylist: [/^\/api/, /^\/oauth-google\.html/, /^\/privacy\.html/],
       },
     }),
   ],
@@ -47,6 +47,13 @@ export default defineConfig({
   },
   build: {
     target: 'es2022',
+    rollupOptions: {
+      // The app, plus the tiny page Google sends you back to after sign-in.
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        oauth: fileURLToPath(new URL('./oauth-google.html', import.meta.url)),
+      },
+    },
     chunkSizeWarningLimit: 1500,
   },
   test: {

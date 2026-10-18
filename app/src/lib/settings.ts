@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { PropType } from './properties'
 import type { SyncConfig } from './types'
 
 export type Theme = 'system' | 'light' | 'dark'
@@ -19,6 +20,12 @@ export const ACCENTS: { id: string; label: string; color: string }[] = [
   { id: 'graphite', label: 'Graphite', color: '#6b6b6b' },
 ]
 
+export interface GoogleSettings {
+  email: string | null // learned from the primary calendar after connecting
+  hidden: string[] // calendar ids not shown in Cairn
+  target: string | null // where new events go (null = primary)
+}
+
 export interface Settings {
   theme: Theme
   palette: Palette
@@ -37,6 +44,7 @@ export interface Settings {
   clock24: boolean
   weekStartsMonday: boolean
   calendarApp: 'google' | 'ics'
+  google: GoogleSettings | null // set once Google Calendar is connected on this device
   foldArrows: 'hover' | 'always'
   sync: SyncConfig | null
   favorites: string[]
@@ -45,6 +53,12 @@ export interface Settings {
   sidebarOpen: boolean
   sidebarWidth: number
   dailyFolder: string
+  templatesFolder: string
+  dailyTemplate: string // template name for new daily notes ('' = start blank)
+  meetingTemplate: string // template name for meeting notes from calendar events
+  meetingFolder: string
+  folderIcons: Record<string, string> // folder path -> icon, on this device
+  propertyTypes: Record<string, PropType> // property name -> the type picked for it
   onboarded: boolean
 }
 
@@ -64,6 +78,7 @@ const DEFAULTS: Settings = {
   clock24: false,
   weekStartsMonday: false,
   calendarApp: 'google',
+  google: null,
   foldArrows: 'hover',
   sync: null,
   favorites: [],
@@ -72,6 +87,12 @@ const DEFAULTS: Settings = {
   sidebarOpen: true,
   sidebarWidth: 260,
   dailyFolder: 'Daily',
+  templatesFolder: 'Templates',
+  dailyTemplate: 'Daily',
+  meetingTemplate: 'Meeting',
+  meetingFolder: 'Meetings',
+  folderIcons: {},
+  propertyTypes: {},
   onboarded: false,
 }
 

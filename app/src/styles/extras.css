@@ -529,6 +529,22 @@
 .cal-day.is-selected .cal-dot {
   background: var(--accent-text);
 }
+/* Google Calendar events: little coloured dots in the corner, one per calendar. */
+.cal-gdots {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: flex;
+  gap: 2px;
+}
+.cal-gdots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+.cal-day.is-selected .cal-gdots span {
+  box-shadow: 0 0 0 1px var(--accent-text);
+}
 .cal-day-panel {
   margin-top: 12px;
   display: flex;
@@ -727,4 +743,80 @@
   flex: none;
   margin-right: 8px;
   color: var(--text-secondary);
+}
+
+/* ---- Google Calendar ------------------------------------------------------ */
+.cal-gstatus:empty {
+  display: none;
+}
+.cal-gstatus .small {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cal-gbar {
+  width: 3px;
+  align-self: stretch;
+  min-height: 16px;
+  border-radius: 2px;
+  flex: none;
+}
+.cal-gevents .cal-time {
+  min-width: 4.5em;
+}
+.google-card {
+  margin: 14px 0 18px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.google-card p {
+  margin: 0;
+}
+.google-card-title {
+  font-weight: 650;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.google-connected {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+.google-cals {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.google-cals label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.google-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex: none;
+}
+.google-privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.google-privacy svg {
+  flex: none;
+  margin-top: 2px;
 }

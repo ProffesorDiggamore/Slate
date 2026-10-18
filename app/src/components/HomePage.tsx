@@ -1,6 +1,7 @@
-import { CalendarDays, Clock, CloudOff, FilePlus, FileText, Network, Search, Smartphone } from 'lucide-react'
+import { CalendarDays, Clock, CloudOff, FilePlus, FileText, ListTodo, Network, Search, Smartphone } from 'lucide-react'
 import { useMemo } from 'react'
 import { relativeTime, useNoteIcons } from '../lib/hooks'
+import { HomeAgenda } from './HomeAgenda'
 import { NoteIcon } from './NoteIcon'
 import { splitFrontmatter } from '../lib/markdown/frontmatter'
 import { dirname, titleOf } from '../lib/paths'
@@ -59,11 +60,17 @@ export function HomePage() {
             <Search size={20} />
             <span>Search</span>
           </button>
+          <button type="button" className="quick" onClick={() => navigate({ name: 'tasks' })}>
+            <ListTodo size={20} />
+            <span>Tasks</span>
+          </button>
           <button type="button" className="quick" onClick={() => navigate({ name: 'graph' })}>
             <Network size={20} />
             <span>Graph</span>
           </button>
         </div>
+
+        <HomeAgenda />
 
         {syncStatus === 'off' && (
           <button type="button" className="callout-card" onClick={() => useUI.setState({ settings: true })}>

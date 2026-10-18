@@ -3,6 +3,7 @@ import { loadAll, persistFiles, persistFolders, persistMeta, persistTrash } from
 import { LinkResolver, rewriteLinks } from './links'
 import { ancestors, basename, dirname, isInFolder, joinPath, NOTE_EXT, sanitizeFolder, sanitizeTitle, titleOf, uniqueNotePath } from './paths'
 import { renamePathInSettings, setSettings, useSettings } from './settings'
+import { baseVars, renderTemplate, STARTER_TEMPLATES, templatePaths } from './templates'
 import { EMPTY_META, type NoteFile, type SyncMeta, type TrashItem } from './types'
 
 export type SyncStatus = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
@@ -236,7 +237,11 @@ export function moveFolder(folder: string, next: string): string {
   if (!nf.includes(next)) nf.push(next)
   useVault.setState({ folders: nf })
   persistFolders(nf)
-  setSettings((s) => ({ expanded: s.expanded.map((e) => (e === folder || isInFolder(e, folder) ? next + e.slice(folder.length) : e)) }))
+  const moved = (e: string) => (e === folder || isInFolder(e, folder) ? next + e.slice(folder.length) : e)
+  setSettings((s) => ({
+    expanded: s.expanded.map(moved),
+    folderIcons: Object.fromEntries(Object.entries(s.folderIcons).map(([k, v]) => [moved(k), v])),
+  }))
   return next
 }
 
@@ -246,6 +251,7 @@ export function deleteFolder(folder: string) {
   const nf = folders.filter((f) => f !== folder && !isInFolder(f, folder))
   useVault.setState({ folders: nf })
   persistFolders(nf)
+  setSettings((s) => ({ folderIcons: Object.fromEntries(Object.entries(s.folderIcons).filter(([k]) => k !== folder && !isInFolder(k, folder))) }))
 }
 
 export function moveNoteToFolder(path: string, folder: string): string {
@@ -266,5 +272,39 @@ export function dailyNotePath(d = new Date()): string {
 export function openDailyNote(d = new Date()): string {
   const path = dailyNotePath(d)
   if (exists(path)) return path
-  return createNote({ folder: sanitizeFolder(useSettings.getState().dailyFolder), title: todayTitle(d) })
+  const { dailyFolder, dailyTemplate } = useSettings.getState()
+  const title = todayTitle(d)
+  const template = templateText(dailyTemplate, { starter: false })
+  const content = template === null ? '' : renderTemplate(template, baseVars(d, title), d)
+  return createNote({ folder: sanitizeFolder(dailyFolder), title, content })
+}
+
+// ---------------------------------------------------------------- templates
+
+/** The path of the template called `name` in the templates folder, if there is one. */
+export function findTemplate(name: string): string | null {
+  const n = name.trim().toLowerCase()
+  if (!n) return null
+  return templatePaths(useVault.getState().paths, useSettings.getState().templatesFolder).find((p) => titleOf(p).toLowerCase() === n) ?? null
+}
+
+/** A template's text by name: the note in the templates folder, else (if allowed) the built-in starter. */
+export function templateText(name: string, { starter: useStarter = true } = {}): string | null {
+  const path = findTemplate(name)
+  if (path) return useVault.getState().files[path]?.content ?? null
+  if (!useStarter) return null
+  const starter = Object.entries(STARTER_TEMPLATES).find(([k]) => k.toLowerCase() === name.trim().toLowerCase())
+  return starter ? starter[1] : null
+}
+
+/** Puts the starter templates in the templates folder (skipping ones that exist). Returns how many were added. */
+export function addStarterTemplates(): number {
+  const folder = sanitizeFolder(useSettings.getState().templatesFolder) || 'Templates'
+  let added = 0
+  for (const [name, text] of Object.entries(STARTER_TEMPLATES)) {
+    if (exists(joinPath(folder, name + NOTE_EXT))) continue
+    createNote({ folder, title: name, content: text })
+    added++
+  }
+  return added
 }

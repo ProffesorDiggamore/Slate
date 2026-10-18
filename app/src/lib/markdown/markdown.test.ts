@@ -230,3 +230,12 @@ describe('frontmatter', () => {
     expect(splitFrontmatter('# Hi\n')).toEqual({ frontmatter: null, body: '# Hi\n' })
   })
 })
+
+describe('empty checkboxes', () => {
+  it('stay checkboxes instead of turning into "\\[ ]" text', () => {
+    expect(markdownToDoc('- [ ] ').content?.[0].type).toBe('taskList')
+    expect(roundTrip('- [ ]\n')).toBe('- [ ] \n')
+    expect(roundTrip('## Action items\n- [ ] \n- [x]\n')).toBe('## Action items\n\n- [ ] \n- [x] \n')
+    expect(roundTrip('- [ ] real task\n- [ ] \n')).toBe('- [ ] real task\n- [ ] \n')
+  })
+})

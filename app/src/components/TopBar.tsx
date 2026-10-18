@@ -44,7 +44,18 @@ export function TopBar() {
       </div>
     )
   } else {
-    const label = route.name === 'graph' ? 'Graph' : route.name === 'trash' ? 'Trash' : 'Home'
+    const label =
+      route.name === 'graph'
+        ? 'Graph'
+        : route.name === 'trash'
+          ? 'Trash'
+          : route.name === 'tasks'
+            ? 'Tasks'
+            : route.name === 'table'
+              ? route.folder
+                ? `${route.folder} · Table`
+                : 'All pages · Table'
+              : 'Home'
     crumbs = <div className="crumbs"><span className="crumb crumb-current">{label}</span></div>
   }
 

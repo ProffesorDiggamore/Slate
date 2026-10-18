@@ -161,13 +161,14 @@ export interface CalendarEvent {
   location?: string
 }
 
-function stamp(d: Date, t: ClockTime | null): string {
+export function stamp(d: Date, t: ClockTime | null): string {
   const pad = (n: number) => String(n).padStart(2, '0')
   const day = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`
   return t ? `${day}T${pad(t.h)}${pad(t.m)}00` : day
 }
 
-function endOf(ev: CalendarEvent): { date: Date; time: ClockTime | null } {
+/** When an event ends: an hour after a lone start time, the next day for all-day events. */
+export function endOf(ev: CalendarEvent): { date: Date; time: ClockTime | null } {
   if (!ev.start) return { date: new Date(ev.date.getFullYear(), ev.date.getMonth(), ev.date.getDate() + 1), time: null }
   const end = ev.end ?? { h: (ev.start.h + 1) % 24, m: ev.start.m }
   const overnight = end.h * 60 + end.m <= ev.start.h * 60 + ev.start.m

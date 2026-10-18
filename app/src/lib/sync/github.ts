@@ -20,6 +20,13 @@ export type NewTreeEntry =
   | { path: string; mode: '100644'; type: 'blob'; content: string }
   | { path: string; mode: '100644'; type: 'blob'; sha: null }
 
+export interface CommitInfo {
+  sha: string
+  message: string
+  date: number
+  author: string
+}
+
 export function parseRepo(input: string): { owner: string; repo: string } | null {
   const s = input.trim().replace(/\.git$/, '').replace(/\/+$/, '')
   const m = /^(?:https?:\/\/)?(?:www\.)?(?:github\.com[/:])?([\w.-]+)\/([\w.-]+)$/i.exec(s)
@@ -130,6 +137,40 @@ export class GitHubApi {
   async getBlobText(sha: string): Promise<string> {
     const b = await this.req<{ content: string; encoding: string }>('GET', `/git/blobs/${sha}`)
     return b.encoding === 'base64' ? decodeBase64Utf8(b.content) : b.content
+  }
+
+  /** Commits on this branch that touched `path` (a repo path), newest first. */
+  async listCommits(path: string, perPage = 40): Promise<CommitInfo[]> {
+    const q = new URLSearchParams({ path, sha: this.cfg.branch, per_page: String(perPage) })
+    try {
+      const r = await this.req<{ sha: string; commit: { message: string; author?: { name?: string; date?: string }; committer?: { date?: string } } }[]>(
+        'GET',
+        `/commits?${q}`,
+      )
+      return r.map((c) => ({
+        sha: c.sha,
+        message: c.commit.message.split('\n')[0],
+        date: Date.parse(c.commit.committer?.date ?? c.commit.author?.date ?? '') || 0,
+        author: c.commit.author?.name ?? '',
+      }))
+    } catch (e) {
+      if (e instanceof GitHubError && e.status === 409) return [] // empty repo
+      throw e
+    }
+  }
+
+  /** A file's text as of a commit, or null if it didn't exist then. */
+  async fileAt(path: string, ref: string): Promise<string | null> {
+    const p = path.split('/').map(encodeURIComponent).join('/')
+    try {
+      const r = await this.req<{ type: string; sha: string; content?: string; encoding?: string }>('GET', `/contents/${p}?ref=${encodeURIComponent(ref)}`)
+      if (r.type !== 'file') return null
+      if (r.encoding === 'base64' && r.content) return decodeBase64Utf8(r.content)
+      return await this.getBlobText(r.sha) // over 1 MB the Contents API leaves the text out
+    } catch (e) {
+      if (e instanceof GitHubError && e.status === 404) return null
+      throw e
+    }
   }
 
   async createTree(baseTree: string | null, tree: NewTreeEntry[]): Promise<string> {

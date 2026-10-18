@@ -537,6 +537,10 @@
   opacity: 1;
 }
 
+.page-icon + .page-controls {
+  margin-left: 10px;
+}
+
 .page-title {
   display: block;
   width: 100%;
@@ -710,7 +714,7 @@
 
 .quick-actions {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 10px;
   margin-bottom: 20px;
 }
@@ -1822,7 +1826,7 @@
   }
 
   .quick-actions {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .modal-backdrop {

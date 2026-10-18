@@ -1,21 +1,26 @@
 import type { Editor } from '@tiptap/core'
-import { ArrowUpRight, FaceSlightlySmilingPlus, FileQuestion, FileText, Link2 } from 'lucide-react'
+import { ArrowUpRight, FaceSlightlySmilingPlus, FileQuestion, FileText, Link2, ListPlus } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { LinkItem } from '../editor/extensions/wikiLinkSuggest'
 import { NoteEditor } from '../editor/NoteEditor'
 import type { TimeClick } from '../editor/extensions/timeChips'
 import { dateFromTitle, downloadIcs, findDate, formatSpan, isoDay, openInGoogleCalendar, titleAround, type CalendarEvent } from '../lib/calendar'
+import { addToGoogle, googleConnected } from '../lib/google/store'
 import { useIsMobile, useIsTouch, useLinkIndex, useNoteIcons, useResolver } from '../lib/hooks'
 import { NoteIcon } from './NoteIcon'
 import { linkContexts, stripSubpath } from '../lib/links'
 import { getField, joinFrontmatter, setField, splitFrontmatter } from '../lib/markdown/frontmatter'
+import { isEncrypted } from '../lib/crypto'
 import { dirname, titleOf } from '../lib/paths'
+import { HIDDEN_KEYS, readProperties } from '../lib/properties'
 import { navigate, openNote } from '../lib/router'
 import { pushRecent, useSettings } from '../lib/settings'
 import { toast } from '../lib/toasts'
 import { createNote, renameNote, updateContent, useVault } from '../lib/vault'
 import { EmojiPicker } from './EmojiPicker'
+import { EncryptedNote } from './EncryptedNote'
 import { MobileToolbar } from './MobileToolbar'
+import { PropertiesPanel } from './PropertiesPanel'
 import { openMenu } from './ui'
 import { openCalendar } from './uiState'
 
@@ -65,7 +70,12 @@ export function NotePage({ path }: { path: string }) {
       </div>
     )
   }
-  return <NoteView key={path} path={path} />
+  return <NoteBody key={path} path={path} />
+}
+
+function NoteBody({ path }: { path: string }) {
+  const encrypted = useVault((s) => isEncrypted(s.files[path]?.content ?? ''))
+  return encrypted ? <EncryptedNote path={path} /> : <NoteView path={path} />
 }
 
 // Clicking a little clock: put that line on a calendar.
@@ -76,7 +86,7 @@ function timeMenu(path: string, { match, blockText, anchor }: TimeClick) {
   openMenu(
     anchor,
     [
-      { label: 'Add to Google Calendar', onSelect: () => openInGoogleCalendar(ev) },
+      { label: 'Add to Google Calendar', onSelect: () => (googleConnected() ? addToGoogle(ev) : openInGoogleCalendar(ev)) },
       { label: 'Add to Apple Calendar (.ics)', onSelect: () => downloadIcs(ev) },
       { label: 'Edit details…', onSelect: () => openCalendar({ title: ev.title, date: isoDay(date), start: match.start, end: match.end }) },
     ],
@@ -84,13 +94,23 @@ function timeMenu(path: string, { match, blockText, anchor }: TimeClick) {
   )
 }
 
-function NoteView({ path }: { path: string }) {
+/** Where a page's text comes from and goes to. Plain pages use the vault; encrypted ones decrypt in between. */
+export interface NoteSource {
+  content: string
+  read: () => string
+  write: (content: string) => void
+}
+
+export function NoteView({ path, source }: { path: string; source?: NoteSource }) {
   const file = useVault((s) => s.files[path])
-  const content = file?.content ?? ''
+  const content = source ? source.content : (file?.content ?? '')
+  const io = useRef<Omit<NoteSource, 'content'>>({ read: () => '', write: () => {} })
+  io.current = source ?? { read: () => useVault.getState().files[path]?.content ?? '', write: (c) => updateContent(path, c) }
   const { frontmatter, body } = useMemo(() => splitFrontmatter(content), [content])
   const fm = useRef(frontmatter)
   fm.current = frontmatter
   const icon = getField(frontmatter, 'icon')
+  const hasProps = useMemo(() => readProperties(frontmatter).some((p) => !HIDDEN_KEYS.has(p.key)), [frontmatter])
   const pageWidth = useSettings((s) => s.pageWidth)
   const font = useSettings((s) => s.font)
   const foldArrows = useSettings((s) => s.foldArrows)
@@ -102,14 +122,14 @@ function NoteView({ path }: { path: string }) {
   resolverRef.current = resolver
   const [editor, setEditor] = useState<Editor | null>(null)
   const [picker, setPicker] = useState(false)
+  const [addingProp, setAddingProp] = useState(false)
 
   useEffect(() => pushRecent(path), [path])
 
-  const onChange = useCallback((md: string) => updateContent(path, joinFrontmatter(fm.current, md)), [path])
+  const onChange = useCallback((md: string) => io.current.write(joinFrontmatter(fm.current, md)), [])
+  const setFrontmatter = (next: string | null) => io.current.write(joinFrontmatter(next, splitFrontmatter(io.current.read()).body))
   const setIcon = (e: string | null) => {
-    const cur = useVault.getState().files[path]?.content ?? ''
-    const split = splitFrontmatter(cur)
-    updateContent(path, joinFrontmatter(setField(split.frontmatter, 'icon', e), split.body))
+    setFrontmatter(setField(splitFrontmatter(io.current.read()).frontmatter, 'icon', e))
     setPicker(false)
   }
 
@@ -173,27 +193,39 @@ function NoteView({ path }: { path: string }) {
     }
   }, [])
 
-  const isNew = !!file && !file.content && Date.now() - file.ctime < 4000
+  // Decided once: a brand-new page starts in its title. Not after Enter in the title
+  // renamed it (that remounts this view and the body should get the cursor), and
+  // not again later just because the page is empty.
+  const [isNew] = useState(() => !!file && !file.content && Date.now() - file.ctime < 4000 && !focusBodyOnMount)
 
   return (
     <div className={`page font-${font} width-${pageWidth}${pageWidth === 'full' ? ' is-full' : ''}${foldArrows === 'always' ? ' folds-always' : ''}`}>
       <div className="page-inner">
         <div className={'page-icon-row' + (icon ? ' has-icon' : '')}>
-          {icon ? (
+          {icon && (
             <button type="button" className="page-icon" onClick={() => setPicker(true)} aria-label="Change icon">
               <NoteIcon value={icon} size={mobile ? 58 : 76} />
             </button>
-          ) : (
+          )}
+          {(!icon || (!hasProps && !addingProp)) && (
             <div className="page-controls">
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setPicker(true)}>
-                <FaceSlightlySmilingPlus size={15} /> Add icon
-              </button>
+              {!icon && (
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setPicker(true)}>
+                  <FaceSlightlySmilingPlus size={15} /> Add icon
+                </button>
+              )}
+              {!hasProps && !addingProp && (
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAddingProp(true)}>
+                  <ListPlus size={15} /> Add property
+                </button>
+              )}
             </div>
           )}
           {picker && <EmojiPicker current={icon} onPick={setIcon} onRemove={icon ? () => setIcon(null) : undefined} onClose={() => setPicker(false)} />}
         </div>
 
         <TitleField path={path} autoFocus={isNew} onEnter={() => editor?.commands.focus('start')} />
+        <PropertiesPanel frontmatter={frontmatter} onChange={setFrontmatter} adding={addingProp} setAdding={setAddingProp} />
 
         <NoteEditor
           markdown={body}

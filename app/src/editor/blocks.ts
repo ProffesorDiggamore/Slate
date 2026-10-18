@@ -163,6 +163,27 @@ export function insertToday(editor: Editor) {
   editor.chain().focus().insertContent(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} `).run()
 }
 
+/** Makes this line a to-do (if it isn't one) and adds today's due date at its end, for the Tasks page. */
+export function insertDue(editor: Editor) {
+  const d = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const iso = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  const inTask = () => {
+    const { $from } = editor.state.selection
+    for (let depth = $from.depth; depth > 0; depth--) if ($from.node(depth).type.name === 'taskItem') return true
+    return false
+  }
+  if (!inTask()) turnInto(editor, 'task')
+  const { $from } = editor.state.selection
+  const text = $from.parent.textContent
+  if (/📅\uFE0F?\s*\d{4}-\d{2}-\d{2}/u.test(text)) return
+  editor
+    .chain()
+    .focus()
+    .insertContentAt($from.end(), `${text && !text.endsWith(' ') ? ' ' : ''}📅 ${iso}`)
+    .run()
+}
+
 export function startPageLink(editor: Editor) {
   editor.chain().focus().insertContent('[[').run()
 }
