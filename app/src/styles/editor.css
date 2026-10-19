@@ -646,21 +646,34 @@
   z-index: 3;
 }
 
+/* Bigger targets than they look: the buttons are 28×30, and an invisible
+   pad bridges the gap to the text so the handle doesn't vanish on the way. */
 .block-handle-inner {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 0;
-  padding-right: 4px;
+  gap: 1px;
+  padding: 4px 10px 4px 4px;
+  margin-left: -4px;
 }
 
 .bh-btn {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 24px;
-  border-radius: 4px;
+  width: 28px;
+  height: 30px;
+  border-radius: 6px;
   color: var(--text-faint);
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+.bh-btn::after {
+  content: '';
+  position: absolute;
+  inset: -4px -2px;
 }
 
 .bh-btn:hover {
@@ -670,19 +683,23 @@
 
 .bh-grip {
   cursor: grab;
-  width: 18px;
+  width: 24px;
+}
+
+.bh-grip:active {
+  cursor: grabbing;
 }
 
 .block-menu {
   position: absolute;
-  top: 28px;
+  top: 36px;
   left: 0;
   width: 210px;
 }
 
 .block-menu-turn {
   position: absolute;
-  top: 28px;
+  top: 36px;
   left: 0;
 }
 

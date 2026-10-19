@@ -67,7 +67,7 @@ export function BlockHandle({ editor }: { editor: Editor }) {
     >
       <div className="block-handle-inner" ref={wrap}>
         <button type="button" className="bh-btn" aria-label="Add block below" title="Add block below" onClick={addBelow}>
-          <Plus size={16} />
+          <Plus size={18} />
         </button>
         <button
           type="button"
@@ -78,7 +78,7 @@ export function BlockHandle({ editor }: { editor: Editor }) {
             if (selectBlock()) setMenu(menu ? null : 'main')
           }}
         >
-          <GripVertical size={16} />
+          <GripVertical size={18} />
         </button>
         {menu === 'main' && (
           <div className="popover block-menu">
