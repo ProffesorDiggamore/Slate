@@ -26,6 +26,8 @@ and syncs automatically. It's free.
   restore one.
 - **Encrypted pages:** seal a page (or a whole folder) with a passphrase. GitHub and this device's storage only ever
   hold ciphertext (AES-256-GCM, PBKDF2-SHA256 600k). The passphrase is never stored and can't be recovered.
+  Turn on **Face ID / Touch ID unlock** per device (iOS / macOS 18+): a passkey seals the passphrase so it only
+  opens with your face, finger or device passcode.
 - **Folder icons:** the same icon maker as pages, from a folder's menu (saved on each device).
 - **Little clocks:** times you type, like `Math 1-3` or `2:30pm`, get a tiny clock; click it to put that line
   on your calendar.

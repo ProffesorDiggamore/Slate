@@ -289,6 +289,17 @@
   opacity: 1;
 }
 
+/* Touch screens have no hover: keep the ••• and + buttons visible, and let a
+   long press open the menu without iOS's own callout getting in the way. */
+@media (hover: none) {
+  .tree-actions {
+    opacity: 1;
+  }
+  .tree-row {
+    -webkit-touch-callout: none;
+  }
+}
+
 .tree-rename {
   flex: 1;
   min-width: 0;

@@ -207,6 +207,12 @@ const Row = memo(function Row({
   const toggle = () =>
     setSettings((s) => ({ expanded: expanded ? s.expanded.filter((e) => e !== node.path) : [...s.expanded, node.path] }))
 
+  // Press and hold opens the menu on phones (iOS sends no contextmenu event).
+  const hold = useRef<{ timer: ReturnType<typeof setTimeout>; fired: boolean } | null>(null)
+  const endHold = () => {
+    if (hold.current) clearTimeout(hold.current.timer)
+  }
+
   const menu = (at: { x: number; y: number } | HTMLElement) =>
     openMenu(at, isFolder ? folderMenu(node.path, () => setRenaming(node.path), at) : noteMenu(node.path, () => setRenaming(node.path)))
 
@@ -237,7 +243,23 @@ const Row = memo(function Row({
           /* not ours */
         }
       }}
-      onClick={() => (isFolder ? toggle() : openNote(node.path))}
+      onTouchStart={(e) => {
+        const t = e.touches[0]
+        const at = { x: t.clientX, y: t.clientY }
+        const h = { fired: false, timer: setTimeout(() => ((h.fired = true), menu(at)), 500) }
+        hold.current = h
+      }}
+      onTouchMove={endHold}
+      onTouchEnd={endHold}
+      onTouchCancel={endHold}
+      onClick={() => {
+        if (hold.current?.fired) {
+          hold.current = null
+          return // the long press already opened the menu
+        }
+        if (isFolder) toggle()
+        else openNote(node.path)
+      }}
       onContextMenu={(e) => {
         e.preventDefault()
         menu({ x: e.clientX, y: e.clientY })
