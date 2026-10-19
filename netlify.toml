@@ -3,8 +3,10 @@
   base = "app"
   command = "npm run build"
   publish = "dist"
-  # Every note sync is a commit. Skip the build when a commit doesn't touch app/.
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- ."
+  # Build every push to main. (An old rule skipped builds when app/ hadn't
+  # changed since the last build — but a deploy-preview build counts as "last",
+  # so merged pull requests were skipped. Notes live in their own repo now, so
+  # there's nothing to skip.)
 
 [build.environment]
   NODE_VERSION = "22"
