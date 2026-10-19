@@ -90,7 +90,7 @@ site is locked so it can only talk to GitHub (and Google Calendar, if you connec
 **What happens if I delete the app?** On a device without sync, its notes go with it (like any app). With sync on,
 everything is still in your GitHub repo — install again, connect the same repo, and it all comes back.
 
-**Something's broken or missing?** Open an [issue](https://github.com/ProffesorDiggamore/Cairn/issues).
+**Something's broken or missing?** Open an [issue](https://github.com/ProffesorDiggamore/Slate/issues).
 
 ---
 

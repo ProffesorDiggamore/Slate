@@ -64,7 +64,7 @@ export function SettingsModal() {
               <div className="settings-note">
                 <strong>Dock icon stuck on a white square?</strong> Safari bakes web-app icons onto a tile, which stands out in a dark, clear
                 or tinted Dock. On macOS 26 or later, double-click <code>mac/apply-dock-icon.command</code> from{' '}
-                <a href="https://github.com/ProffesorDiggamore/Cairn/tree/main/mac" target="_blank" rel="noopener noreferrer">
+                <a href="https://github.com/ProffesorDiggamore/Slate/tree/main/mac" target="_blank" rel="noopener noreferrer">
                   Slate’s GitHub repo <ExternalLink size={12} />
                 </a>{' '}
                 to swap in a see-through icon that follows your Dock’s style. On older macOS, download the icon below and choose it in the
