@@ -3,6 +3,7 @@ import { buildLinkIndex, LinkResolver } from './links'
 import { getField, splitFrontmatter } from './markdown/frontmatter'
 import { useSettings } from './settings'
 import { useVault } from './vault'
+import { isEncrypted } from './crypto'
 
 export function useMediaQuery(q: string): boolean {
   return useSyncExternalStore(
@@ -70,4 +71,11 @@ export function relativeTime(ts: number): string {
   const d = Math.round(h / 24)
   if (d < 7) return `${d} day${d === 1 ? '' : 's'} ago`
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: d > 300 ? 'numeric' : undefined })
+}
+
+/** Paths of encrypted pages (shown with a lock). */
+export function useLockedPaths(): Set<string> {
+  const files = useVault((s) => s.files)
+  const paths = useVault((s) => s.paths)
+  return useMemo(() => new Set(paths.filter((p) => isEncrypted(files[p]?.content ?? ''))), [files, paths])
 }

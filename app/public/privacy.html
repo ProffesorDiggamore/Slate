@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cairn · Privacy</title>
+    <meta name="description" content="Cairn has no server, no accounts and no analytics. Your notes stay on your device and in your own GitHub repo." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <style>
+      /* ---- tokens ---------------------------------------------------------- */
+      :root {
+        --bg: #ffffff;
+        --text: #37352f;
+        --muted: #787774;
+        --line: #e9e9e7;
+        --accent: #2383e2;
+        --card: #f8f8f7;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #191919;
+          --text: #e0e0e0;
+          --muted: #9b9b9b;
+          --line: #2f2f2f;
+          --accent: #529cca;
+          --card: #202020;
+        }
+      }
+      /* ---- page ------------------------------------------------------------ */
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 16px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      }
+      main {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 48px 16px 80px;
+      }
+      h1 {
+        font-size: 32px;
+        line-height: 1.2;
+        margin: 0 0 8px;
+      }
+      h2 {
+        font-size: 19px;
+        margin: 36px 0 8px;
+      }
+      p,
+      li {
+        margin: 6px 0;
+      }
+      a {
+        color: var(--accent);
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 14px 18px;
+        margin: 20px 0;
+      }
+      code {
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p><a href="/">← Back to Cairn</a></p>
+      <h1>Privacy</h1>
+      <p class="muted">Last updated October 18, 2026</p>
+
+      <div class="card">
+        <strong>The short version:</strong> Cairn has no server, no accounts and no analytics. Your notes are stored in your browser on your
+        own device and, if you turn on sync, in a GitHub repository that you own. Whoever runs this website can't see your notes, your
+        calendar or your passwords — the site only sends the app's code to your browser.
+      </div>
+
+      <h2>What's kept on your device</h2>
+      <ul>
+        <li>Your notes, trash and settings, in your browser's storage for this site.</li>
+        <li>Your GitHub access token, if you turn on sync.</li>
+        <li>A Google access token, if you connect Google Calendar. It expires on its own within an hour.</li>
+      </ul>
+      <p>Each browser keeps its own copy. Someone else using Cairn on their own device has a completely separate, private copy.</p>
+
+      <h2>Where your data goes</h2>
+      <ul>
+        <li>
+          <strong>GitHub</strong> (<code>api.github.com</code>) — only if you turn on sync, only the repository you choose, using the token you
+          paste in.
+        </li>
+        <li>
+          <strong>Google Calendar</strong> (<code>www.googleapis.com</code>) — only if you connect it. See below.
+        </li>
+        <li><strong>Nowhere else.</strong> The site tells your browser to block every other destination, so this isn't just a promise.</li>
+      </ul>
+      <p>
+        Links and images you add to your own notes load from wherever they point, like in any editor. The website host (Netlify) keeps the
+        ordinary request logs every web host keeps, such as IP addresses; Cairn adds no tracking of its own.
+      </p>
+
+      <h2>Google Calendar</h2>
+      <p>If you choose to connect Google Calendar, Cairn asks Google for permission to:</p>
+      <ul>
+        <li>see the list of your calendars, so you can choose which ones to show;</li>
+        <li>see your events, so they appear in Cairn's calendar next to your daily notes;</li>
+        <li>add, change and delete events, but only when you tell it to.</li>
+      </ul>
+      <p>
+        Your calendar data goes straight from Google to your browser. It is never sent to, or stored on, any server run by Cairn, never shared or
+        sold, never used for advertising, never used to train AI models, and never read by people. Events are kept in memory only while the
+        app is open.
+      </p>
+      <p>
+        Cairn's use and transfer of information received from Google APIs adheres to the
+        <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener noreferrer">Google API Services User Data Policy</a>,
+        including the Limited Use requirements.
+      </p>
+
+      <h2>Removing your data</h2>
+      <ul>
+        <li><strong>From a device:</strong> Settings → Data → Reset this device.</li>
+        <li>
+          <strong>Google:</strong> Settings → Calendar &amp; time → Disconnect, which also cancels Cairn's access. You can check at
+          <a href="https://myaccount.google.com/permissions" rel="noopener noreferrer">myaccount.google.com/permissions</a>.
+        </li>
+        <li>
+          <strong>GitHub:</strong> delete the token at
+          <a href="https://github.com/settings/personal-access-tokens" rel="noopener noreferrer">github.com/settings/personal-access-tokens</a>. Your
+          notes repo is yours to keep or delete.
+        </li>
+      </ul>
+
+      <h2>Open source</h2>
+      <p>
+        Cairn's code is public at
+        <a href="https://github.com/ProffesorDiggamore/Cairn" rel="noopener noreferrer">github.com/ProffesorDiggamore/Cairn</a>, so anyone can check
+        what it does, or host their own copy. Questions go in that repo's Issues.
+      </p>
+    </main>
+  </body>
+</html>

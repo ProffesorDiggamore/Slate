@@ -1,6 +1,9 @@
 import { lazy, Suspense, useEffect, useRef } from 'react'
 import { CalendarPanel } from './components/CalendarPanel'
 import { CommandPalette } from './components/CommandPalette'
+import { PassphraseHost } from './components/EncryptedNote'
+import { HistoryModal } from './components/HistoryModal'
+import { IconPickerHost } from './components/IconPickerHost'
 import { FolderPickerHost } from './components/FolderPicker'
 import { HomePage } from './components/HomePage'
 import { newNoteIn } from './components/FileTree'
@@ -10,6 +13,8 @@ import { Onboarding } from './components/Onboarding'
 import { SettingsModal } from './components/SettingsModal'
 import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
+import { TablePage } from './components/TablePage'
+import { TasksPage } from './components/TasksPage'
 import { TrashPage } from './components/TrashPage'
 import { Logo, MenuHost, Toasts } from './components/ui'
 import { useUI } from './components/uiState'
@@ -130,6 +135,12 @@ export function App() {
     case 'trash':
       page = <TrashPage />
       break
+    case 'tasks':
+      page = <TasksPage />
+      break
+    case 'table':
+      page = <TablePage folder={route.folder} />
+      break
     default:
       page = <HomePage />
   }
@@ -152,6 +163,9 @@ export function App() {
       <CommandPalette />
       <SettingsModal />
       <CalendarPanel />
+      <HistoryModal />
+      <PassphraseHost />
+      <IconPickerHost />
       <FolderPickerHost />
       <MenuHost />
       <InstallBanner />

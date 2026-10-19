@@ -1,9 +1,30 @@
-import { ChevronRight, FilePlus, FileText, Folder, FolderOpen, FolderPlus, Pencil, Ellipsis, Plus, Star, Trash, FolderInput, Copy } from 'lucide-react'
+import {
+  ChevronRight,
+  Copy,
+  Ellipsis,
+  FilePlus,
+  FileText,
+  Folder,
+  FolderInput,
+  FolderOpen,
+  FolderPlus,
+  History,
+  LayoutTemplate,
+  Lock,
+  LockOpen,
+  Pencil,
+  Plus,
+  Smile,
+  Star,
+  Table2,
+  Trash,
+} from 'lucide-react'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
-import { useNoteIcons } from '../lib/hooks'
+import { isEncrypted } from '../lib/crypto'
+import { useLockedPaths, useNoteIcons } from '../lib/hooks'
 import { NoteIcon } from './NoteIcon'
 import { ancestors, basename, dirname, titleOf } from '../lib/paths'
-import { openNote, useRoute } from '../lib/router'
+import { navigate, openNote, useRoute } from '../lib/router'
 import { setSettings, toggleFavorite, useSettings } from '../lib/settings'
 import {
   createFolder,
@@ -19,7 +40,11 @@ import {
 } from '../lib/vault'
 import { toast } from '../lib/toasts'
 import { openMenu, type MenuEntry } from './ui'
+import { decryptPage, encryptFolder, encryptPages } from './EncryptedNote'
 import { chooseFolder } from './FolderPicker'
+import { openIconPicker } from './IconPickerHost'
+import { chooseNewFromTemplate } from './templateActions'
+import { useUI } from './uiState'
 
 interface TreeNode {
   type: 'folder' | 'note'
@@ -81,6 +106,18 @@ export function noteMenu(path: string, onRename?: () => void): MenuEntry[] {
         openNote(createNote({ folder: dirname(path), title: `${titleOf(path)} copy`, content: n.content }))
       },
     },
+    ...(useSettings.getState().sync
+      ? [{ label: 'Version history', icon: <History size={15} />, onSelect: () => useUI.setState({ history: path }) }]
+      : []),
+    isEncrypted(getNote(path)?.content ?? '')
+      ? { label: 'Remove encryption', icon: <LockOpen size={15} />, onSelect: () => void decryptPage(path) }
+      : {
+          label: 'Encrypt page…',
+          icon: <Lock size={15} />,
+          onSelect: () => {
+            if (confirm(`Encrypt “${titleOf(path)}”? Its text is sealed with your passphrase; the title stays visible.`)) void encryptPages([path])
+          },
+        },
     'sep',
     {
       label: 'Delete',
@@ -94,9 +131,20 @@ export function noteMenu(path: string, onRename?: () => void): MenuEntry[] {
   ]
 }
 
-function folderMenu(path: string, onRename: () => void): MenuEntry[] {
+function setFolderIcon(path: string, icon: string | null) {
+  setSettings((s) => {
+    const next = { ...s.folderIcons }
+    if (icon) next[path] = icon
+    else delete next[path]
+    return { folderIcons: next }
+  })
+}
+
+function folderMenu(path: string, onRename: () => void, anchor: { x: number; y: number } | HTMLElement): MenuEntry[] {
+  const current = useSettings.getState().folderIcons[path] ?? null
   return [
     { label: 'New page', icon: <FilePlus size={15} />, onSelect: () => newNoteIn(path) },
+    { label: 'New page from template…', icon: <LayoutTemplate size={15} />, onSelect: () => chooseNewFromTemplate(anchor, path) },
     {
       label: 'New folder',
       icon: <FolderPlus size={15} />,
@@ -106,6 +154,12 @@ function folderMenu(path: string, onRename: () => void): MenuEntry[] {
     },
     { label: 'Rename', icon: <Pencil size={15} />, onSelect: onRename },
     {
+      label: current ? 'Change icon…' : 'Add icon…',
+      icon: <Smile size={15} />,
+      onSelect: () => openIconPicker(anchor, { current, onPick: (v) => setFolderIcon(path, v), onRemove: current ? () => setFolderIcon(path, null) : undefined }),
+    },
+    { label: 'Open as table', icon: <Table2 size={15} />, onSelect: () => navigate({ name: 'table', folder: path }) },
+    {
       label: 'Move to…',
       icon: <FolderInput size={15} />,
       onSelect: async () => {
@@ -114,6 +168,7 @@ function folderMenu(path: string, onRename: () => void): MenuEntry[] {
         moveFolder(path, dest ? `${dest}/${basename(path)}` : basename(path))
       },
     },
+    { label: 'Encrypt pages inside…', icon: <Lock size={15} />, onSelect: () => encryptFolder(path) },
     'sep',
     {
       label: 'Delete folder',
@@ -133,6 +188,7 @@ const Row = memo(function Row({
   depth,
   active,
   icon,
+  locked,
   expanded,
   renaming,
   setRenaming,
@@ -141,6 +197,7 @@ const Row = memo(function Row({
   depth: number
   active: boolean
   icon?: string
+  locked?: boolean
   expanded: boolean
   renaming: boolean
   setRenaming: (p: string | null) => void
@@ -151,7 +208,7 @@ const Row = memo(function Row({
     setSettings((s) => ({ expanded: expanded ? s.expanded.filter((e) => e !== node.path) : [...s.expanded, node.path] }))
 
   const menu = (at: { x: number; y: number } | HTMLElement) =>
-    openMenu(at, isFolder ? folderMenu(node.path, () => setRenaming(node.path)) : noteMenu(node.path, () => setRenaming(node.path)))
+    openMenu(at, isFolder ? folderMenu(node.path, () => setRenaming(node.path), at) : noteMenu(node.path, () => setRenaming(node.path)))
 
   return (
     <div
@@ -190,10 +247,18 @@ const Row = memo(function Row({
         {isFolder ? (
           <>
             <ChevronRight size={14} className={'tree-chevron' + (expanded ? ' is-open' : '')} />
-            {expanded ? <FolderOpen size={16} strokeWidth={1.75} /> : <Folder size={16} strokeWidth={1.75} />}
+            {icon ? (
+              <NoteIcon className="tree-emoji" value={icon} size={17} />
+            ) : expanded ? (
+              <FolderOpen size={16} strokeWidth={1.75} />
+            ) : (
+              <Folder size={16} strokeWidth={1.75} />
+            )}
           </>
         ) : icon ? (
           <NoteIcon className="tree-emoji" value={icon} size={17} />
+        ) : locked ? (
+          <Lock size={15} strokeWidth={1.75} />
         ) : (
           <FileText size={16} strokeWidth={1.75} />
         )}
@@ -278,6 +343,8 @@ export function FileTree() {
   const expandedList = useSettings((s) => s.expanded)
   const route = useRoute()
   const icons = useNoteIcons()
+  const folderIcons = useSettings((s) => s.folderIcons)
+  const locked = useLockedPaths()
   const [renaming, setRenaming] = useState<string | null>(null)
   const tree = useMemo(() => buildTree(paths, folders), [paths, folders])
   const expanded = useMemo(() => new Set(expandedList), [expandedList])
@@ -300,7 +367,8 @@ export function FileTree() {
           node={n}
           depth={depth}
           active={n.path === activePath}
-          icon={icons[n.path]}
+          icon={n.type === 'folder' ? folderIcons[n.path] : icons[n.path]}
+          locked={locked.has(n.path)}
           expanded={isOpen}
           renaming={renaming === n.path}
           setRenaming={setRenaming}

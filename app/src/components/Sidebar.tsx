@@ -5,37 +5,73 @@ import {
   FileText,
   FolderPlus,
   House,
+  ListTodo,
   Network,
   Plus,
   Search,
   Settings as SettingsIcon,
   Trash,
 } from 'lucide-react'
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
+import { isoDay } from '../lib/calendar'
 import { useIsMobile, useNoteIcons } from '../lib/hooks'
 import { NoteIcon } from './NoteIcon'
 import { titleOf } from '../lib/paths'
 import { navigate, openNote, useRoute } from '../lib/router'
 import { setSettings, useSettings } from '../lib/settings'
+import { useTasks } from '../lib/taskIndex'
+import { bucketOf } from '../lib/tasks'
 import { createFolder, useVault } from '../lib/vault'
 import { FileTree, newNoteIn, noteMenu } from './FileTree'
 import { SyncIndicator } from './SyncIndicator'
 import { Kbd, Logo, mod, openMenu } from './ui'
 import { openCalendar, useUI } from './uiState'
 
-function NavItem({ icon, label, onClick, active, hint }: { icon: React.ReactNode; label: string; onClick: () => void; active?: boolean; hint?: string }) {
+function NavItem({
+  icon,
+  label,
+  onClick,
+  active,
+  hint,
+  badge,
+}: {
+  icon: React.ReactNode
+  label: string
+  onClick: () => void
+  active?: boolean
+  hint?: string
+  badge?: { count: number; alert: boolean }
+}) {
   return (
     <button type="button" className={'nav-item' + (active ? ' is-active' : '')} onClick={onClick}>
       <span className="nav-icon">{icon}</span>
       <span className="nav-label">{label}</span>
       {hint && <Kbd>{hint}</Kbd>}
+      {badge && badge.count > 0 && <span className={'nav-badge' + (badge.alert ? ' is-alert' : '')}>{badge.count}</span>}
     </button>
   )
+}
+
+/** To-dos due today or overdue, for the sidebar badge. */
+function useDueCount() {
+  const tasks = useTasks()
+  const today = isoDay(new Date())
+  return useMemo(() => {
+    let due = 0
+    let late = false
+    for (const t of tasks) {
+      const b = bucketOf(t, today)
+      if (b === 'today' || b === 'overdue') due++
+      if (b === 'overdue') late = true
+    }
+    return { count: due, alert: late }
+  }, [tasks, today])
 }
 
 export function Sidebar() {
   const route = useRoute()
   const favorites = useSettings((s) => s.favorites)
+  const dueCount = useDueCount()
   const width = useSettings((s) => s.sidebarWidth)
   const paths = useVault((s) => s.paths)
   const trashCount = useVault((s) => s.trash.length)
@@ -72,6 +108,7 @@ export function Sidebar() {
         <NavItem icon={<Search size={17} />} label="Search" hint={mobile ? undefined : `${mod}K`} onClick={go(() => useUI.setState({ palette: 'search' }))} />
         <NavItem icon={<House size={17} />} label="Home" active={route.name === 'home'} onClick={go(() => navigate({ name: 'home' }))} />
         <NavItem icon={<CalendarDays size={17} />} label="Calendar" onClick={go(() => openCalendar())} />
+        <NavItem icon={<ListTodo size={17} />} label="Tasks" active={route.name === 'tasks'} badge={dueCount} onClick={go(() => navigate({ name: 'tasks' }))} />
         <NavItem icon={<Network size={17} />} label="Graph" active={route.name === 'graph'} onClick={go(() => navigate({ name: 'graph' }))} />
         <NavItem icon={<SettingsIcon size={17} />} label="Settings" onClick={go(() => useUI.setState({ settings: true }))} />
       </nav>

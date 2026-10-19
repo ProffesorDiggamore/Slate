@@ -3,6 +3,7 @@ import { PluginKey } from '@tiptap/pm/state'
 import Suggestion, { type SuggestionProps } from '@tiptap/suggestion'
 import {
   Calendar,
+  CalendarCheck,
   CalendarPlus,
   ChevronsDownUp,
   Clock,
@@ -15,6 +16,7 @@ import {
   Image,
   ImageUp,
   Info,
+  LayoutTemplate,
   Lightbulb,
   List,
   ListCollapse,
@@ -28,7 +30,8 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { forwardRef, useCallback } from 'react'
-import { insertCallout, insertImage, insertNow, insertTable, insertToday, startPageLink, turnInto, uploadImage } from '../blocks'
+import { insertCallout, insertDue, insertImage, insertNow, insertTable, insertToday, startPageLink, turnInto, uploadImage } from '../blocks'
+import { chooseTemplateToInsert } from '../../components/templateActions'
 import { openCalendar } from '../../components/uiState'
 import { floatingUi, MenuList, reactSuggestion, useMenuNav, type MenuHandle } from '../suggestion'
 
@@ -69,7 +72,9 @@ export const SLASH_ITEMS: SlashItem[] = [
   { group: 'Links & media', title: 'Image from link', description: 'Embed an image from a web address.', icon: Image, keywords: ['picture', 'photo', 'img', 'url'], run: insertImage },
   { group: 'Dates & times', title: 'Today’s date', description: 'Insert the date, like 2026-10-12.', icon: Calendar, keywords: ['date', 'today', 'now'], run: insertToday },
   { group: 'Dates & times', title: 'Current time', description: 'Insert the time right now.', icon: Clock, keywords: ['time', 'now', 'clock'], run: insertNow },
+  { group: 'Dates & times', title: 'Due date', description: 'Give this to-do a due date (shows up in Tasks).', icon: CalendarCheck, keywords: ['due', 'deadline', 'task', 'todo', 'date'], run: insertDue },
   { group: 'Dates & times', title: 'Calendar event', description: 'Put this line on Google Calendar.', icon: CalendarPlus, keywords: ['event', 'calendar', 'google', 'schedule', 'meeting', 'remind'], run: (e) => openCalendar({ title: e.state.selection.$from.parent.textContent.trim() }) },
+  { group: 'Templates', title: 'Template', description: 'Insert one of your templates here.', icon: LayoutTemplate, keywords: ['template', 'snippet', 'boilerplate'], run: chooseTemplateToInsert },
 ]
 
 export function filterSlash(query: string): SlashItem[] {

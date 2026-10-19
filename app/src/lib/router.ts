@@ -1,6 +1,12 @@
 import { useSyncExternalStore } from 'react'
 
-export type Route = { name: 'home' } | { name: 'note'; path: string } | { name: 'graph' } | { name: 'trash' }
+export type Route =
+  | { name: 'home' }
+  | { name: 'note'; path: string }
+  | { name: 'graph' }
+  | { name: 'trash' }
+  | { name: 'tasks' }
+  | { name: 'table'; folder: string }
 
 export function parseHash(hash: string): Route {
   const h = hash.replace(/^#\/?/, '')
@@ -11,6 +17,14 @@ export function parseHash(hash: string): Route {
       return { name: 'home' }
     }
   }
+  if (h === 'table' || h.startsWith('table/')) {
+    try {
+      return { name: 'table', folder: decodeURIComponent(h.slice(6)) }
+    } catch {
+      return { name: 'table', folder: '' }
+    }
+  }
+  if (h === 'tasks') return { name: 'tasks' }
   if (h === 'graph') return { name: 'graph' }
   if (h === 'trash') return { name: 'trash' }
   return { name: 'home' }
@@ -24,6 +38,10 @@ export function hrefFor(route: Route): string {
       return '#/graph'
     case 'trash':
       return '#/trash'
+    case 'tasks':
+      return '#/tasks'
+    case 'table':
+      return '#/table/' + encodeURIComponent(route.folder)
     default:
       return '#/'
   }

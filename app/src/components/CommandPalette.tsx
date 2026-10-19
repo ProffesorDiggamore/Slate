@@ -1,6 +1,7 @@
 import { Command } from 'cmdk'
-import { CalendarDays, FilePlus, FileText, House, Moon, Network, PanelLeft, RefreshCw, Search, Settings, Sun, Trash } from 'lucide-react'
+import { CalendarDays, FilePlus, FileText, House, LayoutTemplate, ListTodo, Lock, Moon, Network, PanelLeft, RefreshCw, Search, Settings, Sun, Table2, Trash } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { lockNow, useLock } from '../lib/crypto'
 import { useNoteIcons } from '../lib/hooks'
 import { NoteIcon } from './NoteIcon'
 import { dirname, titleOf } from '../lib/paths'
@@ -10,6 +11,7 @@ import { setSettings, useSettings } from '../lib/settings'
 import { runSync } from '../lib/sync/manager'
 import { createNote, openDailyNote, useVault } from '../lib/vault'
 import { newNoteIn } from './FileTree'
+import { chooseNewFromTemplate } from './templateActions'
 import { mod } from './ui'
 import { openCalendar, useUI } from './uiState'
 
@@ -30,6 +32,7 @@ export function CommandPalette() {
   const recent = useSettings((s) => s.recent)
   const theme = useSettings((s) => s.theme)
   const icons = useNoteIcons()
+  const locked = useLock((s) => !!s.keyring)
 
   const close = () => {
     useUI.setState({ palette: null })
@@ -41,6 +44,16 @@ export function CommandPalette() {
       { id: 'new', label: 'New page', icon: <FilePlus size={16} />, hint: `${mod}N`, run: () => newNoteIn(''), keywords: 'create add note' },
       { id: 'calendar', label: 'Open calendar', icon: <CalendarDays size={16} />, run: () => openCalendar(), keywords: 'calendar event google schedule month' },
       { id: 'today', label: 'Open today’s note', icon: <CalendarDays size={16} />, run: () => openNote(openDailyNote()), keywords: 'daily journal date' },
+      { id: 'tasks', label: 'Open tasks', icon: <ListTodo size={16} />, run: () => navigate({ name: 'tasks' }), keywords: 'todo to-do checklist due overdue' },
+      {
+        id: 'template',
+        label: 'New page from template…',
+        icon: <LayoutTemplate size={16} />,
+        run: () => chooseNewFromTemplate({ x: Math.max(12, window.innerWidth / 2 - 130), y: 120 }),
+        keywords: 'template daily meeting create',
+      },
+      { id: 'table', label: 'All pages as a table', icon: <Table2 size={16} />, run: () => navigate({ name: 'table', folder: '' }), keywords: 'database properties columns' },
+      ...(locked ? [{ id: 'lock', label: 'Lock encrypted pages', icon: <Lock size={16} />, run: lockNow, keywords: 'encrypt passphrase secure' }] : []),
       { id: 'home', label: 'Go home', icon: <House size={16} />, run: () => navigate({ name: 'home' }) },
       { id: 'graph', label: 'Open graph view', icon: <Network size={16} />, run: () => navigate({ name: 'graph' }), keywords: 'links map' },
       { id: 'sync', label: 'Sync now', icon: <RefreshCw size={16} />, run: () => void runSync(), keywords: 'github upload refresh' },
@@ -61,7 +74,7 @@ export function CommandPalette() {
       { id: 'trash', label: 'Open trash', icon: <Trash size={16} />, run: () => navigate({ name: 'trash' }), keywords: 'deleted restore' },
       { id: 'settings', label: 'Settings', icon: <Settings size={16} />, hint: `${mod},`, run: () => useUI.setState({ settings: true }), keywords: 'preferences sync github install' },
     ],
-    [theme],
+    [theme, locked],
   )
 
   const notes = useMemo(() => paths.map((p) => ({ path: p, content: files[p]?.content ?? '' })), [paths, files])

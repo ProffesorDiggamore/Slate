@@ -1,6 +1,7 @@
-import { CalendarClock, Check, ChevronRight, CloudCog, Download, ExternalLink, Info, LoaderCircle, Palette, RefreshCw, Smartphone, TriangleAlert, Database } from 'lucide-react'
+import { CalendarClock, Check, ChevronRight, CloudCog, Download, ExternalLink, Info, LayoutTemplate, LoaderCircle, Palette, RefreshCw, Smartphone, TriangleAlert, Database } from 'lucide-react'
 import { useState } from 'react'
 import { clearAll } from '../lib/db'
+import { revokeGoogle } from '../lib/google/auth'
 import { relativeTime, useIsMobile } from '../lib/hooks'
 import { ACCENTS, setSettings, useSettings, type Density, type Font, type PageWidth, type Palette as PaletteName, type Theme } from '../lib/settings'
 import { parseRepo } from '../lib/sync/github'
@@ -8,11 +9,14 @@ import { runSync, testConnection } from '../lib/sync/manager'
 import { toast } from '../lib/toasts'
 import { EMPTY_META } from '../lib/types'
 import { applyFiles, setMeta, useVault } from '../lib/vault'
+import { EncryptionSettings } from './EncryptionSettings'
+import { GoogleCalendarSettings } from './GoogleCalendarSettings'
 import { InstallSteps } from './InstallHint'
+import { TemplateSettings } from './TemplateSettings'
 import { Modal } from './ui'
 import { useUI } from './uiState'
 
-type Tab = 'sync' | 'appearance' | 'calendar' | 'install' | 'data' | 'about'
+type Tab = 'sync' | 'appearance' | 'calendar' | 'templates' | 'install' | 'data' | 'about'
 
 export function SettingsModal() {
   const open = useUI((s) => s.settings)
@@ -23,6 +27,7 @@ export function SettingsModal() {
     { id: 'sync', label: 'Sync', icon: <CloudCog size={16} /> },
     { id: 'appearance', label: 'Appearance', icon: <Palette size={16} /> },
     { id: 'calendar', label: 'Calendar & time', icon: <CalendarClock size={16} /> },
+    { id: 'templates', label: 'Templates', icon: <LayoutTemplate size={16} /> },
     { id: 'install', label: 'Install app', icon: <Smartphone size={16} /> },
     { id: 'data', label: 'Data', icon: <Database size={16} /> },
     { id: 'about', label: 'About', icon: <Info size={16} /> },
@@ -42,6 +47,7 @@ export function SettingsModal() {
           {tab === 'sync' && <SyncSettings />}
           {tab === 'appearance' && <AppearanceSettings />}
           {tab === 'calendar' && <CalendarSettings />}
+          {tab === 'templates' && <TemplateSettings />}
           {tab === 'install' && (
             <section>
               <h3>Install Cairn as an app</h3>
@@ -56,8 +62,13 @@ export function SettingsModal() {
                 <strong>On your Mac:</strong> open it in Safari and use <em>File → Add to Dock…</em>
               </div>
               <div className="settings-note">
-                <strong>Dock icon looks boxed in?</strong> Safari sometimes puts web-app icons on a white tile. Download the see-through pebble
-                below, then in the Cairn window choose <em>Cairn → Settings → General</em>, click the icon, and pick this file.
+                <strong>Dock icon stuck on a white square?</strong> Safari bakes web-app icons onto a tile, which stands out in a dark, clear
+                or tinted Dock. On macOS 26 or later, double-click <code>mac/apply-dock-icon.command</code> from{' '}
+                <a href="https://github.com/ProffesorDiggamore/Cairn/tree/main/mac" target="_blank" rel="noopener noreferrer">
+                  Cairn’s GitHub repo <ExternalLink size={12} />
+                </a>{' '}
+                to swap in a see-through icon that follows your Dock’s style. On older macOS, download the pebble below and choose it in the
+                Cairn window under <em>Cairn → Settings → General</em> (click the icon).
                 <div className="row-gap" style={{ marginTop: 8 }}>
                   <a className="btn btn-sm" href="/cairn-pebble.png" download="Cairn pebble.png">
                     <Download size={15} /> Download Dock icon
@@ -75,7 +86,11 @@ export function SettingsModal() {
                 callouts, tasks and tags all work in both apps.
               </p>
               <p className="muted">
-                Your notes live on this device and in your own GitHub repository. Nothing is sent anywhere else. Keyboard: {` `}
+                Your notes live on this device and in your own GitHub repository. Nothing is sent anywhere else —{' '}
+                <a href="/privacy.html" target="_blank" rel="noopener">
+                  privacy details
+                </a>
+                . Keyboard: {` `}
                 <kbd className="kbd">⌘K</kbd> search, <kbd className="kbd">⌘N</kbd> new page, <kbd className="kbd">/</kbd> blocks,{' '}
                 <kbd className="kbd">[[</kbd> link a page, <kbd className="kbd">⌘\</kbd> sidebar.
               </p>
@@ -103,7 +118,7 @@ export function SyncForm({ onConnected }: { onConnected?: () => void }) {
     setError(null)
     setWarning(null)
     const parsed = parseRepo(repo)
-    if (!parsed) return setError('Enter the repo as owner/name, like ProffesorDiggamore/Cairn, or paste its GitHub URL.')
+    if (!parsed) return setError('Enter the repo as owner/name, like your-name/cairn-notes, or paste its GitHub URL.')
     const tok = token.trim() || current?.token || ''
     if (!tok) return setError('Paste your GitHub token.')
     setBusy(true)
@@ -147,7 +162,7 @@ export function SyncForm({ onConnected }: { onConnected?: () => void }) {
     <form className="sync-form" onSubmit={connect}>
       <label className="field">
         <span>GitHub repository</span>
-        <input className="input" value={repo} onChange={(e) => setRepo(e.target.value)} placeholder="ProffesorDiggamore/cairn-notes" autoCapitalize="off" autoCorrect="off" spellCheck={false} />
+        <input className="input" value={repo} onChange={(e) => setRepo(e.target.value)} placeholder="your-name/cairn-notes" autoCapitalize="off" autoCorrect="off" spellCheck={false} />
       </label>
       <label className="field">
         <span>
@@ -451,9 +466,10 @@ function CalendarSettings() {
     <section>
       <h3>Calendar &amp; time</h3>
       <p className="muted">
-        The Calendar button shows your daily notes by month and puts events on Google Calendar (or Apple Calendar with an .ics file) — no account
-        linking needed.
+        The Calendar button shows your daily notes by month. Connect Google Calendar to see your events there too and add new ones without
+        leaving Cairn — or skip it and use Google’s event page or an .ics file for Apple Calendar.
       </p>
+      <GoogleCalendarSettings />
       <Toggle
         label="Little clocks next to times"
         desc="Shows a tiny clock after times like “2:30pm” or “1-3”. Click it to add the line to your calendar."
@@ -489,10 +505,11 @@ function DataSettings() {
         {count} page{count === 1 ? '' : 's'} on this device. Every page is a Markdown file — in your GitHub repo you can open them with Obsidian, VS Code
         or any text editor.
       </p>
+      <EncryptionSettings />
       <div className="danger-zone">
         <div>
           <strong>Reset this device</strong>
-          <p className="muted small">Removes all notes, settings and your token from this device only. Anything already synced stays on GitHub.</p>
+          <p className="muted small">Removes all notes, settings and tokens from this device only, and cancels Cairn’s Google Calendar access. Anything already synced stays on GitHub.</p>
         </div>
         <button
           type="button"
@@ -503,6 +520,7 @@ function DataSettings() {
               ? 'Some changes haven’t synced yet and will be LOST. Reset this device anyway?'
               : 'Remove all Cairn data from this device? Your GitHub copy is not touched.'
             if (!confirm(msg)) return
+            await revokeGoogle()
             await clearAll()
             try {
               localStorage.clear()

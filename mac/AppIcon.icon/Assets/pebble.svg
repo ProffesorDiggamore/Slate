@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Cairn pebble, traced from the web manifest icon and rescaled to the full Icon Composer canvas. -->
+  <defs>
+    <radialGradient id="stone" cx="0.38" cy="0.34" r="0.78">
+      <stop offset="0" stop-color="#939e96"/>
+      <stop offset="1" stop-color="#555e58"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="511" cy="532" rx="225" ry="156" transform="rotate(-12.8 511 532)" fill="url(#stone)"/>
+</svg>

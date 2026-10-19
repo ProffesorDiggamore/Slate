@@ -337,16 +337,19 @@ function list(t: Tokens.List): JSONContent[] {
   let cur: JSONContent | null = null
   let n = typeof t.start === 'number' ? t.start : 1
   for (const item of t.items) {
-    const isTask = item.task
+    // marked only sees a task when text follows the box; an empty `- [ ]` is still one.
+    const empty = !item.task && /^\[([ xX])\][ \t]*$/.exec(item.text)
+    const isTask = item.task || !!empty
     const listType = isTask ? 'taskList' : t.ordered ? 'orderedList' : 'bulletList'
     if (!cur || cur.type !== listType) {
       cur = { type: listType, content: [] }
       if (listType === 'orderedList' && n !== 1) cur.attrs = { start: n }
       out.push(cur)
     }
-    const body = blocks(item.tokens.filter((x) => x.type !== 'checkbox'))
+    const body = empty ? [] : blocks(item.tokens.filter((x) => x.type !== 'checkbox'))
     const content = body.length && body[0].type === 'paragraph' ? body : [{ type: 'paragraph' }, ...body]
-    if (isTask) cur.content!.push({ type: 'taskItem', attrs: { checked: !!item.checked }, content })
+    const checked = empty ? empty[1] !== ' ' : !!item.checked
+    if (isTask) cur.content!.push({ type: 'taskItem', attrs: { checked }, content })
     else cur.content!.push({ type: 'listItem', content })
     n++
   }

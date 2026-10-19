@@ -1,18 +1,21 @@
-import { CalendarPlus, ChevronLeft, ChevronRight, Download, ExternalLink, FileText } from 'lucide-react'
+import { CalendarPlus, ChevronLeft, ChevronRight, Download, ExternalLink, FilePen, FileText, LoaderCircle, RefreshCw, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import {
   clockSvg,
   downloadIcs,
-  findTimes,
   formatSpan,
+  formatTime,
   isoDay,
   openInGoogleCalendar,
-  titleAround,
   type CalendarEvent,
   type ClockTime,
 } from '../lib/calendar'
-import { splitFrontmatter } from '../lib/markdown/frontmatter'
+import { eventsOn, type GEvent } from '../lib/google/api'
+import { googleConfigured, useGoogleAuth } from '../lib/google/auth'
+import { addToGoogle, connectGoogleCalendar, loadGoogleRange, quickAddEvent, refreshGoogle, removeFromGoogle, useGoogleCal } from '../lib/google/store'
+import { openMeetingNote } from '../lib/meeting'
 import { openNote } from '../lib/router'
+import { timesIn } from '../lib/taskIndex'
 import { setSettings, useSettings } from '../lib/settings'
 import { dailyNotePath, openDailyNote, useVault } from '../lib/vault'
 import { Modal } from './ui'
@@ -32,25 +35,29 @@ const parseIso = (s: string) => {
 }
 const sameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 
-interface DayItem {
-  title: string
-  start: ClockTime
-  end: ClockTime | null
+const itemsIn = (content: string) => timesIn(content, useSettings.getState().bareTimeRanges)
+
+const clockOf = (d: Date): ClockTime => ({ h: d.getHours(), m: d.getMinutes() })
+
+/** Google Calendar is set up and connected on this device. */
+function useGoogleOn() {
+  const connected = useSettings((s) => !!s.google)
+  return connected && googleConfigured()
 }
 
-function itemsIn(content: string): DayItem[] {
-  const out: DayItem[] = []
-  for (const raw of splitFrontmatter(content).body.split('\n')) {
-    const line = raw.replace(/^\s*(?:[-*+]\s+(?:\[[ xX]\]\s+)?|\d+[.)]\s+|#{1,6}\s+|>\s*)/, '')
-    for (const m of findTimes(line, { bareRanges: useSettings.getState().bareTimeRanges })) {
-      out.push({ title: titleAround(line, m) || 'Event', start: m.start, end: m.end })
-    }
-  }
-  return out.sort((a, b) => a.start.h * 60 + a.start.m - (b.start.h * 60 + b.start.m))
+/** True while there's an access token that hasn't run out. */
+function useGoogleToken() {
+  return useGoogleAuth((s) => !!s.token && s.expiresAt > Date.now() + 30_000)
 }
 
 function EventForm({ prefill, day }: { prefill: CalendarPrefill; day: Date }) {
   const app = useSettings((s) => s.calendarApp)
+  const googleOn = useGoogleOn()
+  const target = useSettings((s) => s.google?.target ?? null)
+  const calendars = useGoogleCal((s) => s.calendars)
+  const writable = useMemo(() => (calendars ?? []).filter((c) => c.writable), [calendars])
+  const [calendarId, setCalendarId] = useState<string>('')
+  const [saving, setSaving] = useState(false)
   const [title, setTitle] = useState(prefill.title ?? '')
   const [date, setDate] = useState(prefill.date ?? isoDay(day))
   const [allDay, setAllDay] = useState(!prefill.start && !!prefill.date)
@@ -70,9 +77,25 @@ function EventForm({ prefill, day }: { prefill: CalendarPrefill; day: Date }) {
     details: details.trim() || undefined,
   })
 
+  const addGoogle = () => {
+    if (!googleOn) return openInGoogleCalendar(event())
+    setSaving(true)
+    addToGoogle(event(), {
+      calendarId: calendarId || target || undefined,
+      onDone: (ok) => {
+        setSaving(false)
+        if (ok) {
+          setTitle('')
+          setDetails('')
+        }
+      },
+    })
+  }
+
   const google = (
-    <button type="button" className={'btn btn-sm' + (app === 'google' ? ' btn-primary' : '')} onClick={() => openInGoogleCalendar(event())}>
-      <CalendarPlus size={15} /> Add to Google Calendar
+    <button type="button" className={'btn btn-sm' + (app === 'google' ? ' btn-primary' : '')} onClick={addGoogle} disabled={saving}>
+      {saving ? <LoaderCircle size={15} className="spin" /> : <CalendarPlus size={15} />} Add to Google Calendar
+      {!googleOn && <ExternalLink size={12} />}
     </button>
   )
   const ics = (
@@ -82,7 +105,7 @@ function EventForm({ prefill, day }: { prefill: CalendarPrefill; day: Date }) {
   )
 
   return (
-    <form className="cal-form" onSubmit={(e) => (e.preventDefault(), app === 'google' ? openInGoogleCalendar(event()) : downloadIcs(event()))}>
+    <form className="cal-form" onSubmit={(e) => (e.preventDefault(), app === 'google' ? addGoogle() : downloadIcs(event()))}>
       <div className="cal-form-title">New event</div>
       <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What’s happening?" autoFocus={!prefill.title} />
       <div className="cal-form-row">
@@ -99,6 +122,18 @@ function EventForm({ prefill, day }: { prefill: CalendarPrefill; day: Date }) {
         </div>
       )}
       <textarea className="input cal-details" rows={2} value={details} onChange={(e) => setDetails(e.target.value)} placeholder="Notes (optional)" />
+      {googleOn && writable.length > 1 && (
+        <label className="cal-pref">
+          Calendar
+          <select value={calendarId || target || writable.find((c) => c.primary)?.id || writable[0].id} onChange={(e) => setCalendarId(e.target.value)}>
+            {writable.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <div className="row-gap">
         {app === 'google' ? (
           <>
@@ -128,6 +163,14 @@ function CalendarBody({ prefill }: { prefill: CalendarPrefill }) {
   const monday = useSettings((s) => s.weekStartsMonday)
   const h24 = useSettings((s) => s.clock24)
   const calendarApp = useSettings((s) => s.calendarApp)
+  const googleOn = useGoogleOn()
+  const hasToken = useGoogleToken()
+  const hidden = useSettings((s) => s.google?.hidden)
+  const gEvents = useGoogleCal((s) => s.events)
+  const gLoading = useGoogleCal((s) => s.loading)
+  const gError = useGoogleCal((s) => s.error)
+  const gCalendars = useGoogleCal((s) => s.calendars)
+  const signingIn = useGoogleAuth((s) => s.busy)
   const today = new Date()
   const [day, setDay] = useState(() => (prefill.date ? parseIso(prefill.date) : today))
   const [month, setMonth] = useState(() => new Date(day.getFullYear(), day.getMonth(), 1))
@@ -155,10 +198,37 @@ function CalendarBody({ prefill }: { prefill: CalendarPrefill }) {
     return Array.from({ length: 42 }, (_, i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i))
   }, [month, monday])
 
+  // Google events for the six weeks on screen (memory only; see lib/google/store).
+  const first = cells[0].getTime()
+  useEffect(() => {
+    if (!googleOn || !hasToken) return
+    const from = new Date(first)
+    void loadGoogleRange(from, new Date(from.getFullYear(), from.getMonth(), from.getDate() + 42))
+  }, [googleOn, hasToken, first, hidden])
+
+  const gDots = useMemo(() => {
+    const out = new Map<string, string[]>()
+    if (!googleOn) return out
+    for (const d of cells) {
+      const colors = [...new Set(eventsOn(gEvents, d).map((e) => e.color))].slice(0, 3)
+      if (colors.length) out.set(isoDay(d), colors)
+    }
+    return out
+  }, [gEvents, cells, googleOn])
+
   const weekdays = monday ? ['M', 'T', 'W', 'T', 'F', 'S', 'S'] : ['S', 'M', 'T', 'W', 'T', 'F', 'S']
   const dayPath = dailyNotePath(day)
   const dayNote = files[dayPath]
   const items = dayNote && !dayNote.deleted ? itemsIn(dayNote.content) : []
+  const dayEvents = googleOn ? eventsOn(gEvents, day) : []
+  const canEdit = (e: GEvent) => !!gCalendars?.find((c) => c.id === e.calendarId)?.writable
+  const whenText = (e: GEvent) => {
+    if (e.allDay) return 'All day'
+    const startsToday = sameDay(e.start, day)
+    const endsToday = sameDay(e.end, day) || e.end.getTime() === new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1).getTime()
+    if (startsToday) return formatSpan(clockOf(e.start), endsToday ? clockOf(e.end) : null, h24)
+    return endsToday ? `Until ${formatTime(clockOf(e.end), h24)}` : 'All day'
+  }
 
   const go = (delta: number) => setMonth(new Date(month.getFullYear(), month.getMonth() + delta, 1))
   const pick = (d: Date) => {
@@ -209,6 +279,13 @@ function CalendarBody({ prefill }: { prefill: CalendarPrefill }) {
                 >
                   {d.getDate()}
                   {mark && <span className={'cal-dot' + (mark === 'times' ? ' has-times' : '')} />}
+                  {gDots.has(key) && (
+                    <span className="cal-gdots" aria-hidden="true">
+                      {gDots.get(key)!.map((c) => (
+                        <span key={c} style={{ background: c }} />
+                      ))}
+                    </span>
+                  )}
                 </button>
               )
             })}
@@ -225,6 +302,63 @@ function CalendarBody({ prefill }: { prefill: CalendarPrefill }) {
             >
               <FileText size={15} /> {dayNote && !dayNote.deleted ? 'Open daily note' : 'Start a daily note'}
             </button>
+            {googleOn && (
+              <div className="cal-gstatus">
+                {!hasToken ? (
+                  <button type="button" className="btn btn-sm" onClick={refreshGoogle} disabled={signingIn}>
+                    {signingIn ? <LoaderCircle size={15} className="spin" /> : <RefreshCw size={15} />} Show Google Calendar events
+                  </button>
+                ) : gLoading ? (
+                  <span className="muted small">
+                    <LoaderCircle size={13} className="spin" /> Loading Google Calendar…
+                  </span>
+                ) : gError ? (
+                  <span className="text-error small">
+                    {gError}{' '}
+                    <button type="button" className="link-btn" onClick={refreshGoogle}>
+                      Try again
+                    </button>
+                  </span>
+                ) : null}
+              </div>
+            )}
+            {dayEvents.length > 0 && (
+              <ul className="cal-items cal-gevents">
+                {dayEvents.map((e) => (
+                  <li key={e.calendarId + e.id}>
+                    <span className="cal-gbar" style={{ background: e.color }} />
+                    <span className="cal-time">{whenText(e)}</span>
+                    <span className="cal-what">{e.title}</span>
+                    <button
+                      type="button"
+                      className="icon-btn icon-btn-sm"
+                      title="Meeting note"
+                      onClick={() => {
+                        openNote(openMeetingNote(e))
+                        close()
+                      }}
+                    >
+                      <FilePen size={14} />
+                    </button>
+                    {e.link && (
+                      <a className="icon-btn icon-btn-sm" href={e.link} target="_blank" rel="noopener noreferrer" title="Open in Google Calendar">
+                        <ExternalLink size={14} />
+                      </a>
+                    )}
+                    {canEdit(e) && (
+                      <button
+                        type="button"
+                        className="icon-btn icon-btn-sm"
+                        title="Delete from Google Calendar"
+                        onClick={() => confirm(`Delete “${e.title}” from Google Calendar?`) && removeFromGoogle(e)}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
             {items.length > 0 && (
               <ul className="cal-items">
                 {items.map((it, i) => (
@@ -236,11 +370,7 @@ function CalendarBody({ prefill }: { prefill: CalendarPrefill }) {
                       type="button"
                       className="icon-btn icon-btn-sm"
                       title="Add to calendar"
-                      onClick={() => {
-                        const ev = { title: it.title, date: day, start: it.start, end: it.end }
-                        if (calendarApp === 'ics') downloadIcs(ev)
-                        else openInGoogleCalendar(ev)
-                      }}
+                      onClick={() => quickAddEvent({ title: it.title, date: day, start: it.start, end: it.end })}
                     >
                       <CalendarPlus size={15} />
                     </button>
@@ -253,9 +383,15 @@ function CalendarBody({ prefill }: { prefill: CalendarPrefill }) {
         <div className="cal-right">
           <EventForm prefill={prefill} day={day} />
           <div className="cal-foot">
-            <a href="https://calendar.google.com/" target="_blank" rel="noopener noreferrer" className="link-btn">
-              Open Google Calendar <ExternalLink size={12} />
-            </a>
+            {googleConfigured() && !googleOn ? (
+              <button type="button" className="link-btn" onClick={connectGoogleCalendar} disabled={signingIn}>
+                Connect Google Calendar
+              </button>
+            ) : (
+              <a href="https://calendar.google.com/" target="_blank" rel="noopener noreferrer" className="link-btn">
+                Open Google Calendar <ExternalLink size={12} />
+              </a>
+            )}
             <label className="cal-pref">
               Default
               <select value={calendarApp} onChange={(e) => setSettings({ calendarApp: e.target.value as 'google' | 'ics' })}>

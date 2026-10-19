@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Cairn · Google sign-in</title>
+    <style>
+      body {
+        font: 15px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0 16px;
+        color: #787774;
+        background: #fff;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          color: #9b9b9b;
+          background: #191919;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    Finishing sign-in…
+    <script type="module" src="/src/oauth-google.ts"></script>
+  </body>
+</html>
