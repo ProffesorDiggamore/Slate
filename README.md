@@ -92,6 +92,11 @@ everything is still in your GitHub repo — install again, connect the same repo
 
 **Something's broken or missing?** Open an [issue](https://github.com/ProffesorDiggamore/Slate/issues).
 
+## License
+
+Slate is free and open source under the [MIT License](LICENSE): use it, change it, share it, even sell it. Just
+keep the copyright notice.
+
 ---
 
 <sub>Want to run your own copy, turn on Google Calendar for your site, or work on the code? See the
