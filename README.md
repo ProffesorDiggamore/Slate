@@ -4,7 +4,7 @@
 
 <p align="center"><strong>Notes that feel like Notion and stay yours like Obsidian — free, private, and on all your devices.</strong></p>
 
-<p align="center"><a href="https://cairnnote.netlify.app"><strong>Open Slate →</strong></a></p>
+<p align="center"><a href="https://slatenotes.netlify.app"><strong>Open Slate →</strong></a></p>
 
 ---
 
@@ -19,7 +19,7 @@ about ten seconds and you can remove it like any other app.
 
 ### On a Mac (Safari)
 
-1. Open **<https://cairnnote.netlify.app>** in Safari.
+1. Open **<https://slatenotes.netlify.app>** in Safari.
 2. In the menu bar, choose **File → Add to Dock…**, then click **Add**.
 3. Slate now opens from your Dock, Launchpad and Spotlight in its own window.
 
@@ -32,7 +32,7 @@ Privacy & Security**, scroll down and click **Open Anyway**. Run it again if you
 
 ### On an iPhone or iPad (Safari)
 
-1. Open **<https://cairnnote.netlify.app>** in Safari.
+1. Open **<https://slatenotes.netlify.app>** in Safari.
 2. Tap **Share** (on newer iOS it's inside the **•••** menu), then **Add to Home Screen**.
 3. Keep **Open as Web App** on and tap **Add**.
 
@@ -79,7 +79,7 @@ you can also open them in Obsidian or any text editor.
 Yes. Slate has **no server, no accounts and no analytics**. Your notes are stored in your own browser and, if you
 turn on sync, in your own private GitHub repo — nobody else can see them, including whoever runs the website. The
 site is locked so it can only talk to GitHub (and Google Calendar, if you connect it). Full details are on the
-[privacy page](https://cairnnote.netlify.app/privacy.html).
+[privacy page](https://slatenotes.netlify.app/privacy.html).
 
 ## Questions
 
