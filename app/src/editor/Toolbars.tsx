@@ -33,6 +33,8 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { BLOCK_LABELS, currentBlock, turnInto, type BlockKind } from './blocks'
+import { lineCount } from './restructure'
+import { ShapeMenu } from './ShapeMenu'
 
 function Btn({ active, onClick, title, children }: { active?: boolean; onClick: () => void; title: string; children: React.ReactNode }) {
   return (
@@ -116,6 +118,7 @@ export function SelectionToolbar({ editor, onLinkPage }: { editor: Editor; onLin
       href: (e.getAttributes('link').href as string | undefined) ?? '',
       block: currentBlock(e),
       from: e.state.selection.from,
+      multi: lineCount(e.state.doc, e.state.selection.from, e.state.selection.to) > 1,
     }),
   })
 
@@ -173,10 +176,11 @@ export function SelectionToolbar({ editor, onLinkPage }: { editor: Editor; onLin
         <div className="tb-row">
           <div className="tb-turn">
             <button type="button" className="tb-btn tb-text" onMouseDown={(e) => e.preventDefault()} onClick={() => setMode(mode === 'turn' ? 'main' : 'turn')}>
-              {BLOCK_LABELS[s.block]}
+              {s.multi ? 'Turn into' : BLOCK_LABELS[s.block]}
               <ChevronDown size={14} />
             </button>
-            {mode === 'turn' && <TurnIntoMenu editor={editor} onDone={() => setMode('main')} />}
+            {mode === 'turn' &&
+              (s.multi ? <ShapeMenu editor={editor} onDone={() => setMode('main')} /> : <TurnIntoMenu editor={editor} onDone={() => setMode('main')} />)}
           </div>
           <span className="tb-sep" />
           <Btn title="Bold (⌘B)" active={s.bold} onClick={() => editor.chain().focus().toggleBold().run()}>

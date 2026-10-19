@@ -15,6 +15,7 @@ import { toast } from '../lib/toasts'
 import { markdownToDoc } from '../lib/markdown/parse'
 import { docToMarkdown } from '../lib/markdown/serialize'
 import { BlockHandle } from './BlockHandle'
+import { PasteOptions } from './ShapeMenu'
 import { Callout } from './extensions/callout'
 import { CodeBlock } from './extensions/codeBlock'
 import { HeadingFold, loadFolds, saveFolds } from './extensions/headingFold'
@@ -169,8 +170,13 @@ export function NoteEditor(props: NoteEditorProps) {
           return true
         }
         // Rich HTML (web pages, Slate itself) pastes as-is; plain text and code
-        // editors' span soup get parsed as markdown.
-        const rich = !!html && /<(p|h[1-6]|ul|ol|li|table|blockquote|pre|img|strong|em|b|i|a)\b/i.test(html)
+        // editors' span soup get parsed as markdown. So does HTML that's only
+        // wrapping literal Markdown (copied from GitHub, Notes, a chat…), where
+        // "**Setup**" should become bold, not show its asterisks.
+        const ours = !!html && /data-pm-slice/.test(html)
+        const formatted = !!html && /<(h[1-6]|ul|ol|li|table|blockquote|pre|img|strong|em|b|i|a)\b/i.test(html)
+        const wrapsMarkdown = !!html && !ours && !formatted && !!text && looksLikeMarkdown(text)
+        const rich = !!html && !wrapsMarkdown && (ours || formatted || /<p\b/i.test(html))
         if (!text || rich) return false
         if (view.state.selection.$from.parent.type.spec.code) return false
         if (!looksLikeMarkdown(text)) return false
@@ -178,7 +184,7 @@ export function NoteEditor(props: NoteEditorProps) {
         const node = view.state.schema.nodeFromJSON(doc)
         const single = node.childCount === 1 && node.firstChild!.type.name === 'paragraph'
         const slice = single ? new Slice(node.firstChild!.content, 0, 0) : new Slice(node.content, 1, 1)
-        view.dispatch(view.state.tr.replaceSelection(slice).scrollIntoView())
+        view.dispatch(view.state.tr.replaceSelection(slice).scrollIntoView().setMeta('paste', true).setMeta('uiEvent', 'paste'))
         return true
       },
       clipboardTextSerializer: (slice) => {
@@ -287,6 +293,7 @@ export function NoteEditor(props: NoteEditorProps) {
     <div className="editor-wrap">
       {!props.touch && <BlockHandle editor={editor} />}
       <SelectionToolbar editor={editor} onLinkPage={(text) => props.onLinkPage(text, editor)} />
+      <PasteOptions editor={editor} />
       <LinkToolbar editor={editor} />
       <TableToolbar editor={editor} />
       <EditorContent editor={editor} />
