@@ -37,7 +37,7 @@ export interface GEvent {
 
 function friendly(status: number, msg: string): string {
   if (status === 401) return 'Google sign-in expired — reconnect to see your events.'
-  if (status === 403) return msg.includes('insufficient') ? 'Cairn needs calendar permission — reconnect and allow it.' : 'Google refused that (403).'
+  if (status === 403) return msg.includes('insufficient') ? 'Slate needs calendar permission — reconnect and allow it.' : 'Google refused that (403).'
   if (status === 404) return 'That calendar or event no longer exists.'
   if (status === 429 || status >= 500) return 'Google Calendar is busy — try again in a moment.'
   return msg || `Google Calendar error ${status}`
@@ -148,7 +148,7 @@ export async function deleteEvent(token: string, calendarId: string, eventId: st
 const pad = (n: number) => String(n).padStart(2, '0')
 const localDateTime = (d: Date, t: ClockTime) => `${isoDay(d)}T${pad(t.h)}:${pad(t.m)}:00`
 
-/** A Cairn event as the request body Google expects. */
+/** A Slate event as the request body Google expects. */
 export function toGoogle(ev: CalendarEvent, timeZone: string) {
   const e = endOf(ev)
   const when =

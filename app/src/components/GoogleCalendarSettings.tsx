@@ -21,7 +21,7 @@ export function GoogleCalendarSettings() {
   if (!googleConfigured()) {
     return (
       <div className="settings-note">
-        <strong>Google Calendar</strong> isn’t switched on for this copy of Cairn. Whoever hosts it needs to add a Google client ID — the
+        <strong>Google Calendar</strong> isn’t switched on for this copy of Slate. Whoever hosts it needs to add a Google client ID — the
         steps are in the README.
       </div>
     )
@@ -29,7 +29,7 @@ export function GoogleCalendarSettings() {
 
   const privacy = (
     <p className="muted small google-privacy">
-      <ShieldCheck size={14} /> Your calendar goes straight from Google to this device — never to a Cairn server — and is only kept while Cairn
+      <ShieldCheck size={14} /> Your calendar goes straight from Google to this device — never to a Slate server — and is only kept while Slate
       is open.{' '}
       <a href="/privacy.html" target="_blank" rel="noopener">
         Privacy
@@ -41,7 +41,7 @@ export function GoogleCalendarSettings() {
     return (
       <div className="google-card">
         <div className="google-card-title">Google Calendar</div>
-        <p className="muted">See your events next to your daily notes and add new ones without leaving Cairn.</p>
+        <p className="muted">See your events next to your daily notes and add new ones without leaving Slate.</p>
         <div className="row-gap">
           <button type="button" className="btn btn-primary" onClick={connectGoogleCalendar} disabled={busy}>
             {busy ? <LoaderCircle size={16} className="spin" /> : <GoogleMark />} Connect Google Calendar
@@ -69,7 +69,7 @@ export function GoogleCalendarSettings() {
           <button type="button" className="btn btn-sm" onClick={refreshGoogle} disabled={busy}>
             {busy ? <LoaderCircle size={15} className="spin" /> : <RefreshCw size={15} />} Load my calendars
           </button>
-          <span className="muted small">Google signs Cairn out every hour; this signs back in.</span>
+          <span className="muted small">Google signs Slate out every hour; this signs back in.</span>
         </div>
       ) : !calendars ? (
         <p className="muted small">
@@ -77,7 +77,7 @@ export function GoogleCalendarSettings() {
         </p>
       ) : (
         <>
-          <div className="setting-sub">Show in Cairn</div>
+          <div className="setting-sub">Show in Slate</div>
           <ul className="google-cals">
             {calendars.map((c) => (
               <li key={c.id}>
@@ -112,7 +112,7 @@ export function GoogleCalendarSettings() {
           type="button"
           className="btn btn-ghost text-error"
           onClick={() => {
-            if (confirm('Disconnect Google Calendar on this device? Cairn’s access is cancelled too; your calendar itself isn’t touched.'))
+            if (confirm('Disconnect Google Calendar on this device? Slate’s access is cancelled too; your calendar itself isn’t touched.'))
               void disconnectGoogleCalendar()
           }}
         >

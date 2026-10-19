@@ -56,8 +56,8 @@ describe('canonical markdown round-trips exactly', () => {
 })
 
 describe('existing vault notes', () => {
-  it('Welcome to Cairn', () => {
-    const md = `This vault is a plain folder of markdown files. Cairn never puts your
+  it('Welcome to Slate', () => {
+    const md = `This vault is a plain folder of markdown files. Slate never puts your
 notes anywhere you cannot reach them with Finder and a text editor.
 
 ## Try these
@@ -85,7 +85,7 @@ notes anywhere you cannot reach them with Finder and a text editor.
     const md = `1. Make a **private** repo on GitHub. Do not add a README.
 2. Create a fine-grained Personal Access Token with **Contents: Read and write**
    scoped to just that repository.
-3. Open Settings in Cairn and paste the repo URL, your username, and the token.
+3. Open Settings in Slate and paste the repo URL, your username, and the token.
 `
     expect(roundTrip(md)).toBe(md)
   })

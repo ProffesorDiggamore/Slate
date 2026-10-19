@@ -1,4 +1,4 @@
-# Cairn
+# Slate
 
 A note-taking app that feels like Notion and stores everything like Obsidian: every page is a plain
 Markdown file in this GitHub repo. It runs on your Mac and your iPhone as an installed app, works offline,
@@ -11,7 +11,7 @@ and syncs automatically. It's free.
 - **Page icons:** pick an emoji, or make your own in *Make your own* — a symbol, letters, an emoji or a
   pixel drawing on a coloured shape — or upload a small picture.
 - **Calendar:** the Calendar button shows your daily notes by month and the times written in them. Connect
-  Google Calendar to see your events there too and add or delete them without leaving Cairn — or skip it and
+  Google Calendar to see your events there too and add or delete them without leaving Slate — or skip it and
   use Google's event page or an .ics file for Apple Calendar.
 - **Today on Home:** your Google events, the times in today's daily note and the to-dos due today, in one list.
   Click an event to open its **meeting note**, made from your Meeting template and linked to that event.
@@ -44,13 +44,13 @@ and syncs automatically. It's free.
 
 The app's code lives in this `app/` folder. **Keep your notes in a separate private repo** (for example
 `cairn-notes`) — not in this one. That way app updates and notes never mix, and nothing private can end up
-in the website build. Cairn ignores `app/` (and anything starting with `.`) when it reads notes, so an
+in the website build. Slate ignores `app/` (and anything starting with `.`) when it reads notes, so an
 old setup that synced into this repo still works, but see *Moving your notes out of this repo* below.
 
 ## Privacy
 
-Cairn has no server, no accounts and no analytics. Each person's notes live in their own browser and their own
-GitHub repo, so many people can use the same Cairn website and nobody — including whoever hosts it — can see
+Slate has no server, no accounts and no analytics. Each person's notes live in their own browser and their own
+GitHub repo, so many people can use the same Slate website and nobody — including whoever hosts it — can see
 anyone else's notes. `netlify.toml` sets a Content-Security-Policy that lets the page talk only to GitHub's API and,
 for people who connect it, Google's Calendar API; the browser blocks everything else. Google Calendar data goes
 straight from Google to the browser and is only kept in memory. The full policy is [`public/privacy.html`](public/privacy.html)
@@ -68,7 +68,7 @@ GitHub with a token that stays on each of your devices.
 2. **Make a free Netlify account** at <https://app.netlify.com/signup> and choose **Sign up with GitHub**.
    No credit card needed.
 3. Click **Add new project → Import an existing project → GitHub**, allow access, and pick your copy of the
-   **Cairn** repo (fork it first if it isn't yours).
+   **Slate** repo (fork it first if it isn't yours).
 4. Netlify reads the settings from `netlify.toml` in the repo, so you'll see *Base directory* `app`,
    *Build command* `npm run build` and *Publish directory* `app/dist` already filled in. Don't change
    anything; just click **Deploy**.
@@ -84,9 +84,9 @@ setup that still syncs notes into this repo never uses up your free plan.
 Google needs to know which website is asking. You make a free *client ID* once; everyone who uses your site then
 connects their own Google account with one click. The ID isn't a secret — it only works from your site's address.
 
-1. Open <https://console.cloud.google.com/>, create a project (e.g. `Cairn`).
+1. Open <https://console.cloud.google.com/>, create a project (e.g. `Slate`).
 2. **APIs & Services → Library →** search **Google Calendar API → Enable**.
-3. **APIs & Services → OAuth consent screen** (Google Auth Platform): app name `Cairn`, your support email,
+3. **APIs & Services → OAuth consent screen** (Google Auth Platform): app name `Slate`, your support email,
    **Audience: External**. Under **Data access** add the scopes
    `.../auth/calendar.calendarlist.readonly` and `.../auth/calendar.events`. Under **Branding** set the home page
    to your site and the privacy policy to `https://YOUR-SITE.netlify.app/privacy.html`.
@@ -105,11 +105,11 @@ Without a client ID the Calendar still works the old way: Google's event page or
 
 ## Install it on your devices
 
-**Mac (Safari):** open your link, then in the menu bar choose **File → Add to Dock…** → **Add**. Cairn now
+**Mac (Safari):** open your link, then in the menu bar choose **File → Add to Dock…** → **Add**. Slate now
 opens in its own window from the Dock, Launchpad and Spotlight, like a normal app. Safari bakes web-app icons
 onto a white square, which sticks out in a dark, clear or tinted Dock. On macOS 26 or later, double-click
 [`mac/apply-dock-icon.command`](../mac/apply-dock-icon.command): it swaps in a see-through layered icon that
-takes on your Dock's style (no Xcode needed; re-run it if you ever re-add Cairn to the Dock).
+takes on your Dock's style (no Xcode needed; re-run it if you ever re-add Slate to the Dock).
 *(Chrome or Edge also work: click the install icon at the right end of the address bar.)*
 
 **iPhone (Safari):** open your link, tap **Share** (on newer iOS it's inside the **•••** menu), choose
@@ -123,25 +123,25 @@ Installing from Safari like this costs nothing and never expires.
 1. **Make a notes repo (once).** Go to <https://github.com/new>, name it `cairn-notes`, choose **Private**,
    and click **Create repository**. This repo holds only your notes — never use the app repo for them.
 2. Create a token at <https://github.com/settings/personal-access-tokens/new>:
-   - Name: `Cairn`, any expiration (paste a new one when it runs out)
+   - Name: `Slate`, any expiration (paste a new one when it runs out)
    - **Repository access → Only select repositories →** `your-name/cairn-notes`
    - **Permissions → Repository permissions → Contents → Read and write**
-3. In Cairn open **Settings → Sync**, enter `your-name/cairn-notes`, leave the branch and folder
+3. In Slate open **Settings → Sync**, enter `your-name/cairn-notes`, leave the branch and folder
    empty, paste the token and press **Connect**.
 
-The token is stored only on that device. It's sent to GitHub and nowhere else. Cairn warns you before
+The token is stored only on that device. It's sent to GitHub and nowhere else. Slate warns you before
 connecting to a **public** repo or to a repo that contains app code.
 
-**Want notes inside a bigger repo anyway?** Fill in *Folder in the repo* (for example `notes`) and Cairn
+**Want notes inside a bigger repo anyway?** Fill in *Folder in the repo* (for example `notes`) and Slate
 reads and writes only that folder.
 
 ## Moving your notes out of this repo
 
-If you first set Cairn up to sync into this app repo:
+If you first set Slate up to sync into this app repo:
 
 1. Create the private `cairn-notes` repo and a token for it (steps 1–2 above).
 2. On one device that has all your notes, open **Settings → Sync → Change repo or token**, enter
-   `your-name/cairn-notes` and press **Save**. Cairn copies every note on that device into the new
+   `your-name/cairn-notes` and press **Save**. Slate copies every note on that device into the new
    repo.
 3. On your other devices, do the same — they'll pull the notes from the new repo.
 4. Check the new repo on GitHub, then delete the old `.md` files from this repo yourself (GitHub keeps them

@@ -207,7 +207,7 @@ export function icsText(ev: CalendarEvent): string {
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Cairn//Notes//EN',
+    'PRODID:-//Slate//Notes//EN',
     'BEGIN:VEVENT',
     `UID:${uid}`,
     `DTSTAMP:${dtstamp}`,

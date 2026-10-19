@@ -13,7 +13,7 @@ import { Modal } from './ui'
 import { useUI } from './uiState'
 
 // Version history: every synced version of a page is a commit in your GitHub
-// repo, so Cairn can list them, show what changed since, and bring one back.
+// repo, so Slate can list them, show what changed since, and bring one back.
 // Restoring is an ordinary edit, so the version you replace stays in history too.
 
 const close = () => useUI.setState({ history: null })

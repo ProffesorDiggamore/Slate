@@ -74,8 +74,8 @@ export async function enrollFaceId(passphrase: string): Promise<void> {
   const created = (await navigator.credentials.create({
     publicKey: {
       challenge: random(32),
-      rp: { name: 'Cairn', id: location.hostname },
-      user: { id: random(16), name: 'Cairn encrypted pages', displayName: 'Cairn encrypted pages' },
+      rp: { name: 'Slate', id: location.hostname },
+      user: { id: random(16), name: 'Slate encrypted pages', displayName: 'Slate encrypted pages' },
       pubKeyCredParams: [
         { type: 'public-key', alg: -7 },
         { type: 'public-key', alg: -257 },

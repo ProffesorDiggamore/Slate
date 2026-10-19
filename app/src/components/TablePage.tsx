@@ -107,7 +107,7 @@ export function TablePage({ folder }: { folder: string }) {
   const addColumn = (key: string, type: PropType) => {
     const k = key.trim()
     if (!k) return
-    if (HIDDEN_KEYS.has(k)) return toast('That name is used by Cairn itself — pick another.')
+    if (HIDDEN_KEYS.has(k)) return toast('That name is used by Slate itself — pick another.')
     const missing = rows.filter((r) => !r.props.has(k))
     if (missing.length > 20 && !confirm(`Add “${k}” to ${missing.length} pages?`)) return
     rememberType(k, type)

@@ -113,7 +113,7 @@ export interface RepoCheck {
   ok: true
   defaultBranch: string
   isPublic: boolean
-  /** The repo also holds app code (Cairn's own app/ folder, a package.json…). */
+  /** The repo also holds app code (Slate's own app/ folder, a package.json…). */
   hasCode: boolean
 }
 

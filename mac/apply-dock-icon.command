@@ -1,23 +1,28 @@
 #!/bin/bash
-# Gives the Safari "Add to Dock" Cairn web app a see-through, layered icon.
+# Gives the Safari "Add to Dock" Slate web app a see-through, layered icon.
 #
 # Safari bakes web-app icons onto a white tile, which sticks out in a Dark,
 # Clear or Tinted Dock. This swaps in a real macOS 26+ icon (Assets.car): no
 # tile of its own, so the system draws the same background every other app
-# gets, and the pebble turns to glass in Clear and Tinted modes.
+# gets, and the slabs turn to glass in Clear and Tinted modes.
 #
 # Double-click it after "File → Add to Dock…" in Safari. Re-run it if you ever
-# remove Cairn from the Dock and add it again (Safari rebuilds the app then).
+# remove Slate from the Dock and add it again (Safari rebuilds the app then).
 # Needs no Xcode: Assets.car ships prebuilt. With Xcode installed it rebuilds
 # from AppIcon.icon so edits to the icon take effect.
 set -euo pipefail
 cd "$(dirname "$0")"
 
-APP="${1:-$HOME/Applications/Cairn.app}"
+# Installs from before the rename are called Cairn.app.
+APP="${1:-}"
+if [ -z "$APP" ]; then
+  APP="$HOME/Applications/Slate.app"
+  [ -d "$APP" ] || APP="$HOME/Applications/Cairn.app"
+fi
 PLIST="$APP/Contents/Info.plist"
 if [ ! -f "$PLIST" ]; then
-  echo "Couldn't find Cairn at $APP."
-  echo "Open Cairn in Safari and choose File → Add to Dock… first, then run this again."
+  echo "Couldn't find Slate at $APP."
+  echo "Open Slate in Safari and choose File → Add to Dock… first, then run this again."
   exit 1
 fi
 

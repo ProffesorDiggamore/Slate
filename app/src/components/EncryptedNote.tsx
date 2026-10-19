@@ -92,7 +92,7 @@ function PassphraseForm({ mode, reason, onDone, check }: { mode: 'unlock' | 'cre
         <div className="settings-warn is-danger">
           <ShieldAlert size={16} />
           <div>
-            <strong>There’s no way to recover a forgotten passphrase</strong> — not by GitHub, not by Cairn. Write it down somewhere safe. You’ll
+            <strong>There’s no way to recover a forgotten passphrase</strong> — not by GitHub, not by Slate. Write it down somewhere safe. You’ll
             use the same one on every device.
           </div>
         </div>
@@ -118,7 +118,7 @@ function PassphraseForm({ mode, reason, onDone, check }: { mode: 'unlock' | 'cre
       <button type="submit" className={'btn' + (enrolled ? '' : ' btn-primary')} disabled={busy || !pass}>
         {busy ? <LoaderCircle size={16} className="spin" /> : <LockOpen size={16} />} {mode === 'create' ? 'Set passphrase' : 'Unlock'}
       </button>
-      <p className="muted small">Kept in memory only while Cairn is open. It locks again after 10 minutes in the background.</p>
+      <p className="muted small">Kept in memory only while Slate is open. It locks again after 10 minutes in the background.</p>
     </form>
   )
 }

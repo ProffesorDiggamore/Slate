@@ -22,7 +22,7 @@ export const ACCENTS: { id: string; label: string; color: string }[] = [
 
 export interface GoogleSettings {
   email: string | null // learned from the primary calendar after connecting
-  hidden: string[] // calendar ids not shown in Cairn
+  hidden: string[] // calendar ids not shown in Slate
   target: string | null // where new events go (null = primary)
 }
 
