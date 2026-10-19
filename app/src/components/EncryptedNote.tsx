@@ -1,6 +1,7 @@
-import { Lock, LoaderCircle, LockOpen, ShieldAlert } from 'lucide-react'
+import { Lock, LoaderCircle, LockOpen, ScanFace, ShieldAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { create } from 'zustand'
+import { enrollFaceId, faceIdAvailable, faceIdEnrolled, faceIdError, faceIdName, unlockWithFaceId } from '../lib/biometric'
 import { isEncrypted, lockNow, unlock, useLock, WrongPassphrase, type Keyring } from '../lib/crypto'
 import { isInFolder, titleOf } from '../lib/paths'
 import { toast } from '../lib/toasts'
@@ -50,6 +51,21 @@ function PassphraseForm({ mode, reason, onDone, check }: { mode: 'unlock' | 'cre
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const enrolled = mode === 'unlock' && faceIdEnrolled()
+
+  const byFaceId = async () => {
+    setError(null)
+    setBusy(true)
+    try {
+      await unlockWithFaceId(check ?? sample())
+      onDone()
+    } catch (err) {
+      setError(faceIdError(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -61,6 +77,7 @@ function PassphraseForm({ mode, reason, onDone, check }: { mode: 'unlock' | 'cre
     try {
       await unlock(pass, mode === 'unlock' ? (check ?? sample()) : undefined)
       onDone()
+      void offerFaceId()
     } catch (err) {
       setError(err instanceof WrongPassphrase ? 'That passphrase doesn’t open your encrypted pages.' : String((err as Error).message ?? err))
     } finally {
@@ -80,10 +97,15 @@ function PassphraseForm({ mode, reason, onDone, check }: { mode: 'unlock' | 'cre
           </div>
         </div>
       )}
+      {enrolled && (
+        <button type="button" className="btn btn-primary" onClick={() => void byFaceId()} disabled={busy}>
+          <ScanFace size={16} /> Unlock with {faceIdName()}
+        </button>
+      )}
       <input
         className="input"
         type="password"
-        autoFocus
+        autoFocus={!enrolled}
         autoComplete={mode === 'create' ? 'new-password' : 'current-password'}
         placeholder="Passphrase"
         value={pass}
@@ -93,12 +115,42 @@ function PassphraseForm({ mode, reason, onDone, check }: { mode: 'unlock' | 'cre
         <input className="input" type="password" autoComplete="new-password" placeholder="Type it again" value={again} onChange={(e) => setAgain(e.target.value)} />
       )}
       {error && <div className="form-error">{error}</div>}
-      <button type="submit" className="btn btn-primary" disabled={busy || !pass}>
+      <button type="submit" className={'btn' + (enrolled ? '' : ' btn-primary')} disabled={busy || !pass}>
         {busy ? <LoaderCircle size={16} className="spin" /> : <LockOpen size={16} />} {mode === 'create' ? 'Set passphrase' : 'Unlock'}
       </button>
       <p className="muted small">Kept in memory only while Cairn is open. It locks again after 10 minutes in the background.</p>
     </form>
   )
+}
+
+// ------------------------------------------------------------ Face ID
+
+const ASKED_KEY = 'cairn.faceid.asked'
+
+/** Turns on Face ID unlock for this device (from a tap). */
+export async function turnOnFaceId(): Promise<boolean> {
+  const ring = useLock.getState().keyring
+  if (!ring) return false
+  try {
+    await enrollFaceId(ring.secret)
+    toast(`${faceIdName()} unlock is on for this device.`)
+    return true
+  } catch (e) {
+    const msg = faceIdError(e)
+    if (msg) toast(msg, { tone: 'error', duration: 8000 })
+    return false
+  }
+}
+
+/** After a passphrase unlock, offer Face ID once per device. */
+async function offerFaceId() {
+  try {
+    if (faceIdEnrolled() || localStorage.getItem(ASKED_KEY) || !(await faceIdAvailable())) return
+    localStorage.setItem(ASKED_KEY, '1')
+  } catch {
+    return
+  }
+  toast(`Unlock with ${faceIdName()} next time on this device?`, { action: { label: 'Turn on', run: () => void turnOnFaceId() }, duration: 15_000 })
 }
 
 // ------------------------------------------------------------ actions

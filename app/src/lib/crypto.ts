@@ -58,6 +58,11 @@ export class Keyring {
 
   constructor(private passphrase: string) {}
 
+  /** For handing to Face ID unlock, which seals it under a device key. */
+  get secret(): string {
+    return this.passphrase
+  }
+
   private key(saltB64: string, iterations: number): Promise<CryptoKey> {
     const id = `${saltB64}:${iterations}`
     let k = this.keys.get(id)
