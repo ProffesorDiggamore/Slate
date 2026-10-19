@@ -1,5 +1,5 @@
 import { X } from 'lucide-react'
-import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { create } from 'zustand'
 import { dismissToast, useToasts } from '../lib/toasts'
 
@@ -135,20 +135,20 @@ export function Modal({
 
 // --------------------------------------------------------------------- logo
 
-// Just the pebble — no tile behind it, so it sits naturally on any background.
+// The Slate mark: three stacked slabs, drawn in the text colour so it's dark on
+// light themes and light on dark ones, with no tile behind it.
+export const SLATE_PATHS = [
+  'M34.2 31.9 L53.8 11.0 L61.6 29.8 L46.5 36.0 L35.8 33.7 Z',
+  'M24.0 51.7 L29.3 45.4 L65.5 32.7 L72.8 45.4 L60.6 60.3 L25.3 53.0 Z',
+  'M15.2 77.5 L32.4 60.0 L73.9 67.9 L84.8 78.0 L34.5 89.0 Z',
+]
+
 export function Logo({ size = 22 }: { size?: number }) {
-  const id = useId().replace(/:/g, '')
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true" className="logo">
-      <defs>
-        <radialGradient id={`pebble-${id}`} cx="0.36" cy="0.3" r="0.85">
-          <stop offset="0" stopColor="#9ba69d" />
-          <stop offset="1" stopColor="#323b35" />
-        </radialGradient>
-      </defs>
-      <ellipse cx="51" cy="79" rx="32" ry="4.5" fill="currentColor" opacity="0.14" />
-      <ellipse cx="50" cy="53" rx="41" ry="28.5" transform="rotate(-8 50 53)" fill={`url(#pebble-${id})`} />
-      <ellipse cx="36" cy="40" rx="13" ry="6" transform="rotate(-18 36 40)" fill="#ffffff" opacity="0.22" />
+      {SLATE_PATHS.map((d) => (
+        <path key={d} d={d} fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" />
+      ))}
     </svg>
   )
 }

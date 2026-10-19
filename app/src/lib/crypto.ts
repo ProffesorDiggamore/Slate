@@ -3,7 +3,7 @@ import { create } from 'zustand'
 // Encrypted pages. The note's whole text (frontmatter included) is sealed with
 // AES-256-GCM under a key stretched from your passphrase (PBKDF2-SHA256,
 // 600,000 rounds), so GitHub, the website host and anyone with the repo see only
-// ciphertext. The passphrase lives in memory while Cairn is open and unlocked —
+// ciphertext. The passphrase lives in memory while Slate is open and unlocked —
 // never in storage — and there is no way to recover it.
 //
 // On disk an encrypted page is still a Markdown file Obsidian can open:
@@ -103,7 +103,7 @@ export class Keyring {
     } catch {
       throw new Error('This encrypted page is damaged and can’t be read.')
     }
-    if (p.v !== 1) throw new Error('This page was encrypted by a newer version of Cairn.')
+    if (p.v !== 1) throw new Error('This page was encrypted by a newer version of Slate.')
     const key = await this.key(p.salt, p.iter)
     try {
       const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(p.iv) }, key, fromB64(p.ct))
@@ -122,7 +122,7 @@ function wrap(b64: string): string {
     '---',
     '',
     '> [!lock] Encrypted page',
-    '> This page is encrypted with Cairn. Open it in Cairn and enter your passphrase to read it.',
+    '> This page is encrypted with Slate. Open it in Slate and enter your passphrase to read it.',
     '',
     '```cairn-encrypted',
     ...lines,
@@ -158,7 +158,7 @@ export function lockNow() {
   useLock.setState({ keyring: null })
 }
 
-// Lock again after Cairn has been in the background for a while.
+// Lock again after Slate has been in the background for a while.
 const AUTO_LOCK_MS = 10 * 60_000
 let armed = false
 function armAutoLock() {

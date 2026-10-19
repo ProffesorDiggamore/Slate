@@ -168,7 +168,7 @@ export function NoteEditor(props: NoteEditorProps) {
           void insertImages(view, pics)
           return true
         }
-        // Rich HTML (web pages, Cairn itself) pastes as-is; plain text and code
+        // Rich HTML (web pages, Slate itself) pastes as-is; plain text and code
         // editors' span soup get parsed as markdown.
         const rich = !!html && /<(p|h[1-6]|ul|ol|li|table|blockquote|pre|img|strong|em|b|i|a)\b/i.test(html)
         if (!text || rich) return false

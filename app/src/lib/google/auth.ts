@@ -175,7 +175,7 @@ export function connectGoogle({ hint = null, then, fresh = false }: { hint?: str
 }
 
 // Google's pages cut the link back to the popup's opener, so `popup.closed`
-// can't be trusted. Instead: if the user comes back to Cairn and no answer
+// can't be trusted. Instead: if the user comes back to Slate and no answer
 // arrives shortly after, assume they closed the popup.
 function watchForCancel() {
   const onFocus = () => {
@@ -187,7 +187,7 @@ function watchForCancel() {
   setTimeout(() => window.removeEventListener('focus', onFocus), 10 * 60_000)
 }
 
-/** Forgets the token on this device and asks Google to cancel Cairn's access. */
+/** Forgets the token on this device and asks Google to cancel Slate's access. */
 export async function revokeGoogle() {
   const token = useGoogleAuth.getState().token
   saveToken(null)

@@ -6,7 +6,7 @@ import { deleteEvent, GoogleApiError, insertEvent, listCalendars, listEvents, ty
 import { connectGoogle, expireToken, googleConfigured, revokeGoogle, validToken } from './auth'
 
 // Your Google calendars and events, held in memory only: never written to this
-// device's storage, never sent anywhere but Google, gone when Cairn closes.
+// device's storage, never sent anywhere but Google, gone when Slate closes.
 
 interface CalState {
   calendars: GCalendar[] | null
@@ -18,7 +18,7 @@ interface CalState {
 
 export const useGoogleCal = create<CalState>(() => ({ calendars: null, events: [], range: null, loading: false, error: null }))
 
-/** Google Calendar is switched on for this copy of Cairn and connected on this device. */
+/** Google Calendar is switched on for this copy of Slate and connected on this device. */
 export const googleConnected = () => googleConfigured() && !!useSettings.getState().google
 
 const timeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -127,7 +127,7 @@ export async function disconnectGoogleCalendar() {
 }
 
 /**
- * Puts an event on Google Calendar without leaving Cairn. Call it from a click:
+ * Puts an event on Google Calendar without leaving Slate. Call it from a click:
  * if the hour-long sign-in has run out, it signs in again first.
  */
 export function addToGoogle(ev: CalendarEvent, { calendarId, onDone }: { calendarId?: string; onDone?: (ok: boolean) => void } = {}) {
@@ -137,7 +137,7 @@ export function addToGoogle(ev: CalendarEvent, { calendarId, onDone }: { calenda
       try {
         const cals = await ensureCalendars(token)
         const cal = cals.find((c) => c.id === calendarId && c.writable) ?? targetCalendar()
-        if (!cal) throw new Error('You don’t have a Google calendar Cairn can add events to.')
+        if (!cal) throw new Error('You don’t have a Google calendar Slate can add events to.')
         const created = await insertEvent(token, cal, ev, timeZone())
         if (created && !(useSettings.getState().google?.hidden ?? []).includes(cal.id)) {
           useGoogleCal.setState((s) => ({ events: [...s.events, created] }))

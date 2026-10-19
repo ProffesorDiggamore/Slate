@@ -1,4 +1,4 @@
-// YAML frontmatter is kept as raw text so Cairn never reformats keys it
+// YAML frontmatter is kept as raw text so Slate never reformats keys it
 // doesn't understand. Only simple `key: value` lines are read or edited.
 
 export interface SplitNote {

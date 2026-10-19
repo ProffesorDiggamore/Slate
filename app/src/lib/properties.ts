@@ -1,5 +1,5 @@
 // Page properties: the `key: value` lines of a note's YAML frontmatter, read
-// and edited one key at a time. Lines Cairn doesn't understand (nested maps,
+// and edited one key at a time. Lines Slate doesn't understand (nested maps,
 // multi-line text, comments) are kept byte-for-byte and shown read-only.
 
 export type PropType = 'text' | 'number' | 'checkbox' | 'date' | 'list' | 'complex'
@@ -160,7 +160,7 @@ export function displayValue(p: Property): string {
 
 /**
  * YAML can't say what type an empty value is (or tell a quoted "2" from text),
- * so Cairn remembers the type picked for each property name — like Obsidian's
+ * so Slate remembers the type picked for each property name — like Obsidian's
  * types.json — and reads ambiguous values through it.
  */
 export function withHint(p: Property, hint: PropType | undefined): Property {

@@ -90,7 +90,7 @@ export function Sidebar() {
       <div className="sidebar-head">
         <button type="button" className="workspace" onClick={go(() => navigate({ name: 'home' }))}>
           <Logo size={22} />
-          <span className="workspace-name">Cairn</span>
+          <span className="workspace-name">Slate</span>
         </button>
         <SyncIndicator compact />
         <button

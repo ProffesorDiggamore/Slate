@@ -10,7 +10,7 @@ const GETTING_STARTED = `---
 icon: "👋"
 ---
 
-Cairn is a calm place for your notes. Every page is a plain Markdown file, so it also opens in Obsidian or any text editor.
+Slate is a calm place for your notes. Every page is a plain Markdown file, so it also opens in Obsidian or any text editor.
 
 ## The basics
 
@@ -26,7 +26,7 @@ Cairn is a calm place for your notes. Every page is a plain Markdown file, so it
 - [ ] Open the Graph to see how pages connect
 
 > [!tip] Sync your devices
-> Open **Settings → Sync** to connect a free private GitHub repo. Then install Cairn on your phone and computer from **Settings → Install app**.
+> Open **Settings → Sync** to connect a free private GitHub repo. Then install Slate on your phone and computer from **Settings → Install app**.
 `
 
 export function Onboarding() {
@@ -39,7 +39,7 @@ export function Onboarding() {
     <div className="onboarding">
       <div className="onboarding-card">
         <Logo size={56} />
-        <h1>Welcome to Cairn</h1>
+        <h1>Welcome to Slate</h1>
         <p className="muted">Notes that feel like Notion, files you own like Obsidian — on your computer and your phone, free.</p>
         {mode === 'choose' ? (
           <div className="onboarding-options">

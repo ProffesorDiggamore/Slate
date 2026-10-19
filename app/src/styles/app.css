@@ -82,6 +82,10 @@
   background: var(--bg-hover);
 }
 
+.logo {
+  color: var(--text);
+}
+
 .workspace .logo {
   flex: none;
   border-radius: 6px;

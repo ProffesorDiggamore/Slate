@@ -63,7 +63,7 @@ export function InstallSteps() {
             deferred = null
           }}
         >
-          <Download size={16} /> Install Cairn
+          <Download size={16} /> Install Slate
         </button>
       )}
       {platform === 'ios' && (
@@ -85,7 +85,7 @@ export function InstallSteps() {
             In the menu bar choose <strong>File → Add to Dock…</strong>
           </li>
           <li>
-            Click <strong>Add</strong>. Cairn now lives in your Dock, Launchpad and Spotlight like any Mac app.
+            Click <strong>Add</strong>. Slate now lives in your Dock, Launchpad and Spotlight like any Mac app.
           </li>
         </ol>
       )}
@@ -136,7 +136,7 @@ export function InstallBanner() {
   return (
     <div className="install-banner">
       <div>
-        <strong>Get the Cairn app</strong>
+        <strong>Get the Slate app</strong>
         <InstallSteps />
       </div>
       <button type="button" className="icon-btn" onClick={close} aria-label="Dismiss">

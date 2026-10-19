@@ -1,6 +1,6 @@
 import { Node } from '@tiptap/core'
 
-// Markdown Cairn doesn't have a visual block for (HTML, math, footnotes…)
+// Markdown Slate doesn't have a visual block for (HTML, math, footnotes…)
 // stays as editable source so nothing is lost on save.
 export const RawBlock = Node.create({
   name: 'rawBlock',

@@ -33,10 +33,10 @@ function boot() {
 
   const updateSW = registerSW({
     onNeedRefresh() {
-      toast('A new version of Cairn is ready.', { action: { label: 'Update', run: () => void updateSW(true) }, duration: 120_000 })
+      toast('A new version of Slate is ready.', { action: { label: 'Update', run: () => void updateSW(true) }, duration: 120_000 })
     },
     onOfflineReady() {
-      toast('Cairn is ready to work offline.')
+      toast('Slate is ready to work offline.')
     },
   })
 

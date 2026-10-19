@@ -2,7 +2,7 @@ import { CHANNEL, PENDING_KEY, RESULT_KEY, type AuthResult, type Pending } from 
 
 // Runs on /oauth-google.html when Google sends the user back. The token is in
 // the URL fragment, which never reaches a server; this checks it answers the
-// request Cairn made (the `state`), leaves it where the app will find it, and
+// request Slate made (the `state`), leaves it where the app will find it, and
 // gets out of the way: closes the popup, or returns to the note you were on.
 
 export function finishGoogleSignIn() {
@@ -44,7 +44,7 @@ export function finishGoogleSignIn() {
   if (pending?.mode === 'popup') {
     window.close()
     // Some browsers refuse to close a window the page didn't open itself.
-    document.body.textContent = 'Signed in — you can close this window and go back to Cairn.'
+    document.body.textContent = 'Signed in — you can close this window and go back to Slate.'
   } else {
     location.replace('/' + (pending?.back || '#/'))
   }

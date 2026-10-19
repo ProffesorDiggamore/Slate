@@ -147,7 +147,7 @@ function blocks(tokens: Token[], topLevel = false): JSONContent[] {
         break
       case 'list':
         for (const l of list(t as Tokens.List)) {
-          // Lists only split on marker changes (`*` vs `-`); one list in Cairn.
+          // Lists only split on marker changes (`*` vs `-`); one list in Slate.
           const prev = out[out.length - 1]
           if (prev && prev.type === l.type) prev.content!.push(...l.content!)
           else out.push(l)
@@ -177,7 +177,7 @@ function rawBlock(text: string): JSONContent {
   return withContent({ type: 'rawBlock' }, text ? [{ type: 'text', text }] : [])
 }
 
-// Paragraphs may contain images; Cairn's images are blocks, so split around them.
+// Paragraphs may contain images; Slate's images are blocks, so split around them.
 function paragraph(tokens: Token[]): JSONContent[] {
   const out: JSONContent[] = []
   let run: Token[] = []
@@ -332,7 +332,7 @@ function blockquote(t: Tokens.Blockquote): JSONContent {
 }
 
 function list(t: Tokens.List): JSONContent[] {
-  // Cairn keeps task items and plain items in separate lists, like Notion.
+  // Slate keeps task items and plain items in separate lists, like Notion.
   const out: JSONContent[] = []
   let cur: JSONContent | null = null
   let n = typeof t.start === 'number' ? t.start : 1

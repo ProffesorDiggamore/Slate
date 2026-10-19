@@ -84,7 +84,7 @@ export function HomePage() {
           <button type="button" className="callout-card" onClick={() => useUI.setState({ settings: true })}>
             <Smartphone size={20} />
             <span>
-              <strong>Install Cairn as an app.</strong> Add it to your Dock or Home Screen so it opens like a real app and works offline.
+              <strong>Install Slate as an app.</strong> Add it to your Dock or Home Screen so it opens like a real app and works offline.
             </span>
           </button>
         )}

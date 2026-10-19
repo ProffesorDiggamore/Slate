@@ -50,9 +50,9 @@ export function SettingsModal() {
           {tab === 'templates' && <TemplateSettings />}
           {tab === 'install' && (
             <section>
-              <h3>Install Cairn as an app</h3>
+              <h3>Install Slate as an app</h3>
               <p className="muted">
-                Cairn is a web app you can install for free. Once installed it gets its own icon and window, opens instantly and works offline.
+                Slate is a web app you can install for free. Once installed it gets its own icon and window, opens instantly and works offline.
                 Changes sync whenever you’re online.
               </p>
               <InstallSteps />
@@ -65,12 +65,12 @@ export function SettingsModal() {
                 <strong>Dock icon stuck on a white square?</strong> Safari bakes web-app icons onto a tile, which stands out in a dark, clear
                 or tinted Dock. On macOS 26 or later, double-click <code>mac/apply-dock-icon.command</code> from{' '}
                 <a href="https://github.com/ProffesorDiggamore/Cairn/tree/main/mac" target="_blank" rel="noopener noreferrer">
-                  Cairn’s GitHub repo <ExternalLink size={12} />
+                  Slate’s GitHub repo <ExternalLink size={12} />
                 </a>{' '}
-                to swap in a see-through icon that follows your Dock’s style. On older macOS, download the pebble below and choose it in the
-                Cairn window under <em>Cairn → Settings → General</em> (click the icon).
+                to swap in a see-through icon that follows your Dock’s style. On older macOS, download the icon below and choose it in the
+                Slate window under <em>Slate → Settings → General</em> (click the icon).
                 <div className="row-gap" style={{ marginTop: 8 }}>
-                  <a className="btn btn-sm" href="/cairn-pebble.png" download="Cairn pebble.png">
+                  <a className="btn btn-sm" href="/slate-icon.png" download="Slate icon.png">
                     <Download size={15} /> Download Dock icon
                   </a>
                 </div>
@@ -80,9 +80,9 @@ export function SettingsModal() {
           {tab === 'data' && <DataSettings />}
           {tab === 'about' && (
             <section>
-              <h3>About Cairn</h3>
+              <h3>About Slate</h3>
               <p>
-                Cairn 2.0 — a Notion-style editor on top of plain Markdown files, Obsidian-compatible: <code>[[links]]</code>, backlinks,
+                Slate 2.0 — a Notion-style editor on top of plain Markdown files, Obsidian-compatible: <code>[[links]]</code>, backlinks,
                 callouts, tasks and tags all work in both apps.
               </p>
               <p className="muted">
@@ -199,7 +199,7 @@ export function SyncForm({ onConnected }: { onConnected?: () => void }) {
               GitHub → New repository <ExternalLink size={12} />
             </a>
             , name it <strong>cairn-notes</strong>, choose <strong>Private</strong>, and click <strong>Create repository</strong>. Don’t use the
-            repo that holds the Cairn app — keeping notes on their own means app updates and notes never mix, and nothing private ends up on
+            repo that holds the Slate app — keeping notes on their own means app updates and notes never mix, and nothing private ends up on
             the website.
           </li>
           <li>
@@ -210,7 +210,7 @@ export function SyncForm({ onConnected }: { onConnected?: () => void }) {
             .
           </li>
           <li>
-            Name it <strong>Cairn</strong> and pick an expiration (when it runs out, just paste a new one here).
+            Name it <strong>Slate</strong> and pick an expiration (when it runs out, just paste a new one here).
           </li>
           <li>
             Under <strong>Repository access</strong> choose <strong>Only select repositories</strong> and pick <strong>cairn-notes</strong>.
@@ -265,7 +265,7 @@ function SyncSettings() {
     <section>
       <h3>Sync with GitHub</h3>
       <p className="muted">
-        Cairn saves every note to this device instantly, then syncs it to your private GitHub repo automatically — so your Mac and phone always match.
+        Slate saves every note to this device instantly, then syncs it to your private GitHub repo automatically — so your Mac and phone always match.
         It’s free and the notes stay plain Markdown you own.
       </p>
       {cfg && !editing ? (
@@ -323,7 +323,7 @@ function SyncSettings() {
         <SyncForm onConnected={() => setEditing(false)} />
       )}
       <p className="muted small" style={{ marginTop: 14 }}>
-        <strong>Moving your notes to a new repo?</strong> Create the new private repo, press <em>Change repo or token</em> and enter it — Cairn
+        <strong>Moving your notes to a new repo?</strong> Create the new private repo, press <em>Change repo or token</em> and enter it — Slate
         copies every note on this device into it. The old copies stay in the old repo until you delete them there.
       </p>
     </section>
@@ -467,7 +467,7 @@ function CalendarSettings() {
       <h3>Calendar &amp; time</h3>
       <p className="muted">
         The Calendar button shows your daily notes by month. Connect Google Calendar to see your events there too and add new ones without
-        leaving Cairn — or skip it and use Google’s event page or an .ics file for Apple Calendar.
+        leaving Slate — or skip it and use Google’s event page or an .ics file for Apple Calendar.
       </p>
       <GoogleCalendarSettings />
       <Toggle
@@ -509,7 +509,7 @@ function DataSettings() {
       <div className="danger-zone">
         <div>
           <strong>Reset this device</strong>
-          <p className="muted small">Removes all notes, settings and tokens from this device only, and cancels Cairn’s Google Calendar access. Anything already synced stays on GitHub.</p>
+          <p className="muted small">Removes all notes, settings and tokens from this device only, and cancels Slate’s Google Calendar access. Anything already synced stays on GitHub.</p>
         </div>
         <button
           type="button"
@@ -518,7 +518,7 @@ function DataSettings() {
             const dirty = Object.values(useVault.getState().files).some((f) => f.dirty)
             const msg = dirty
               ? 'Some changes haven’t synced yet and will be LOST. Reset this device anyway?'
-              : 'Remove all Cairn data from this device? Your GitHub copy is not touched.'
+              : 'Remove all Slate data from this device? Your GitHub copy is not touched.'
             if (!confirm(msg)) return
             await revokeGoogle()
             await clearAll()

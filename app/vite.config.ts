@@ -9,10 +9,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'cairn-pebble.png'],
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'slate-icon.png'],
       manifest: {
-        name: 'Cairn',
-        short_name: 'Cairn',
+        name: 'Slate',
+        short_name: 'Slate',
         description: 'Notion-style notes on plain Markdown files, synced through your own GitHub.',
         id: '/',
         start_url: '/',
@@ -25,8 +25,8 @@ export default defineConfig({
         icons: [
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
-          // The see-through pebble, big enough for the macOS Dock.
-          { src: 'cairn-pebble.png', sizes: '1024x1024', type: 'image/png', purpose: 'any' },
+          // The see-through slabs, big enough for the macOS Dock.
+          { src: 'slate-icon.png', sizes: '1024x1024', type: 'image/png', purpose: 'any' },
           { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },

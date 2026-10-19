@@ -2,26 +2,26 @@
   "fill": "none",
   "groups": [
     {
-      "blur-material": null,
       "layers": [
         {
-          "glass": false,
-          "image-name": "highlight.svg",
-          "name": "highlight",
-          "position": {
-            "scale": 1.2,
-            "translation-in-points": [
-              0,
-              0
-            ]
-          }
-        },
-        {
           "glass": true,
-          "image-name": "pebble.svg",
-          "name": "pebble",
+          "image-name": "slate.svg",
+          "name": "slate",
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "srgb:0.22745,0.25882,0.29412,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "srgb:1.00000,1.00000,1.00000,1.00000"
+              }
+            }
+          ],
           "position": {
-            "scale": 1.2,
+            "scale": 1,
             "translation-in-points": [
               0,
               0
