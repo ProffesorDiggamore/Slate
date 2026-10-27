@@ -118,7 +118,7 @@ export function SyncForm({ onConnected }: { onConnected?: () => void }) {
     setError(null)
     setWarning(null)
     const parsed = parseRepo(repo)
-    if (!parsed) return setError('Enter the repo as owner/name, like your-name/cairn-notes, or paste its GitHub URL.')
+    if (!parsed) return setError('Enter the repo as owner/name, like your-name/slate-notes, or paste its GitHub URL.')
     const tok = token.trim() || current?.token || ''
     if (!tok) return setError('Paste your GitHub token.')
     setBusy(true)
@@ -162,7 +162,7 @@ export function SyncForm({ onConnected }: { onConnected?: () => void }) {
     <form className="sync-form" onSubmit={connect}>
       <label className="field">
         <span>GitHub repository</span>
-        <input className="input" value={repo} onChange={(e) => setRepo(e.target.value)} placeholder="your-name/cairn-notes" autoCapitalize="off" autoCorrect="off" spellCheck={false} />
+        <input className="input" value={repo} onChange={(e) => setRepo(e.target.value)} placeholder="your-name/slate-notes" autoCapitalize="off" autoCorrect="off" spellCheck={false} />
       </label>
       <label className="field">
         <span>
@@ -195,10 +195,10 @@ export function SyncForm({ onConnected }: { onConnected?: () => void }) {
         <ol className="help-steps">
           <li>
             <strong>Make a separate, private repo just for notes.</strong> Open{' '}
-            <a href="https://github.com/new?name=cairn-notes&visibility=private" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/new?name=slate-notes&visibility=private" target="_blank" rel="noopener noreferrer">
               GitHub → New repository <ExternalLink size={12} />
             </a>
-            , name it <strong>cairn-notes</strong>, choose <strong>Private</strong>, and click <strong>Create repository</strong>. Don’t use the
+            , name it <strong>slate-notes</strong>, choose <strong>Private</strong>, and click <strong>Create repository</strong>. Don’t use the
             repo that holds the Slate app — keeping notes on their own means app updates and notes never mix, and nothing private ends up on
             the website.
           </li>
@@ -213,13 +213,13 @@ export function SyncForm({ onConnected }: { onConnected?: () => void }) {
             Name it <strong>Slate</strong> and pick an expiration (when it runs out, just paste a new one here).
           </li>
           <li>
-            Under <strong>Repository access</strong> choose <strong>Only select repositories</strong> and pick <strong>cairn-notes</strong>.
+            Under <strong>Repository access</strong> choose <strong>Only select repositories</strong> and pick <strong>slate-notes</strong>.
           </li>
           <li>
             Under <strong>Permissions → Repository permissions</strong>, set <strong>Contents</strong> to <strong>Read and write</strong>.
           </li>
           <li>
-            Click <strong>Generate token</strong>, copy it, and paste it above with <strong>your-name/cairn-notes</strong> as the repository.
+            Click <strong>Generate token</strong>, copy it, and paste it above with <strong>your-name/slate-notes</strong> as the repository.
             Do this once on each device.
           </li>
         </ol>

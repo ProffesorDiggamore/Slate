@@ -52,7 +52,7 @@ syncs with a free **private** GitHub repository that you own:
 
 1. Make a free account at <https://github.com> if you don't have one.
 2. In Slate, open **Settings → Sync** and follow the steps there (about two minutes). They walk you through
-   making a private repo called `cairn-notes` and a token that can only touch that one repo.
+   making a private repo (for example `slate-notes`) and a token that can only touch that one repo.
 3. Do **Settings → Sync** once on each device, with the same repo.
 
 After that, notes save instantly and sync by themselves. Every page is a normal Markdown file in your repo, so

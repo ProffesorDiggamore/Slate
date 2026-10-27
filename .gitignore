@@ -2,3 +2,6 @@
 .trash/
 .cairn/
 .DS_Store
+
+# Local agent tooling state
+.claude-flow/
