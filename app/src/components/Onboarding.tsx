@@ -17,7 +17,7 @@ Slate is a calm place for your notes. Every page is a plain Markdown file, so it
 - Type \`/\` on an empty line for headings, to-dos, callouts, tables and more
 - Type \`[[\` to link another page — links show up as backlinks at the bottom of that page
 - Select text to bold it, highlight it, or turn it into a link
-- Press \`⌘K\` to search everything, \`⌘N\` for a new page
+- Press \`⌘K\` (\`Ctrl+K\` on Windows) to search everything, \`⌘N\` (\`Ctrl+N\`) for a new page
 
 ## Try it
 

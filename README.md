@@ -36,7 +36,20 @@ Privacy & Security**, scroll down and click **Open Anyway**. Run it again if you
 2. Tap **Share** (on newer iOS it's inside the **•••** menu), then **Add to Home Screen**.
 3. Keep **Open as Web App** on and tap **Add**.
 
-### On Android, Windows, Linux or a Chromebook
+### On Windows (Edge or Chrome)
+
+1. Open **<https://slatenotes.netlify.app>** in Microsoft Edge (already on every Windows PC) or Chrome.
+2. Click the **install icon** at the right end of the address bar — a little screen with a down arrow — then
+   **Install**. (Or: Edge **⋯** menu → **Apps → Install Slate**; Chrome **⋮** menu → **Cast, save and share →
+   Install page as app…**)
+3. Slate now opens from the Start menu and its own window. Right-click its taskbar icon → **Pin to taskbar** to keep
+   it there.
+
+Shortcuts use **Ctrl** where the Mac uses **⌘** (Ctrl+K to search, Ctrl+N for a new page), and encrypted pages
+unlock with **Windows Hello** where your PC supports it. To remove Slate, open it and choose **⋯ → Uninstall Slate**,
+or remove it from **Settings → Apps** like any other app.
+
+### On Android, Linux or a Chromebook
 
 Open the link in Chrome or Edge and choose **Install app** (or **Add to Home screen**) from the browser menu.
 
@@ -52,7 +65,7 @@ syncs with a free **private** GitHub repository that you own:
 
 1. Make a free account at <https://github.com> if you don't have one.
 2. In Slate, open **Settings → Sync** and follow the steps there (about two minutes). They walk you through
-   making a private repo called `cairn-notes` and a token that can only touch that one repo.
+   making a private repo (for example `slate-notes`) and a token that can only touch that one repo.
 3. Do **Settings → Sync** once on each device, with the same repo.
 
 After that, notes save instantly and sync by themselves. Every page is a normal Markdown file in your repo, so

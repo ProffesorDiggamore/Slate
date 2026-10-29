@@ -17,8 +17,9 @@ export default defineConfig({
         id: '/',
         start_url: '/',
         scope: '/',
+        // No window-controls-overlay: the layout has no drag region, so hiding the title bar
+        // left Windows' close buttons over the top bar and the window impossible to move.
         display: 'standalone',
-        display_override: ['window-controls-overlay', 'standalone'],
         background_color: '#ffffff',
         theme_color: '#ffffff',
         categories: ['productivity', 'education'],

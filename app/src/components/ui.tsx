@@ -159,6 +159,7 @@ export function Kbd({ children }: { children: ReactNode }) {
 
 export const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
 export const mod = isMac ? '⌘' : 'Ctrl+'
+export const shift = isMac ? '⇧' : 'Shift+'
 
 // ------------------------------------------------------------------- toasts
 

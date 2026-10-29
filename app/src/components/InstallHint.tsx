@@ -92,8 +92,12 @@ export function InstallSteps() {
       {platform === 'chromium' && !prompt && (
         <ol>
           <li>
-            Click the <strong>install icon</strong> at the right end of the address bar (a screen with a down arrow),
-            or open the <strong>⋮</strong> menu → <strong>Cast, save and share → Install page as app…</strong>
+            Click the <strong>install icon</strong> at the right end of the address bar (a screen with a down arrow), or open the{' '}
+            {/Edg\//.test(navigator.userAgent) ? (
+              <><strong>⋯</strong> menu → <strong>Apps → Install Slate</strong></>
+            ) : (
+              <><strong>⋮</strong> menu → <strong>Cast, save and share → Install page as app…</strong></>
+            )}
           </li>
         </ol>
       )}

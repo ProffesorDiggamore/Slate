@@ -43,7 +43,7 @@ and syncs automatically. It's free.
   nothing is lost.
 
 The app's code lives in this `app/` folder. **Keep your notes in a separate private repo** (for example
-`cairn-notes`) — not in this one. That way app updates and notes never mix, and nothing private can end up
+`slate-notes`) — not in this one. That way app updates and notes never mix, and nothing private can end up
 in the website build. Slate ignores `app/` (and anything starting with `.`) when it reads notes, so an
 old setup that synced into this repo still works, but see *Moving your notes out of this repo* below.
 
@@ -74,7 +74,7 @@ GitHub with a token that stays on each of your devices.
    anything; just click **Deploy**.
 5. After about a minute you get a link like `https://wonderful-pebble-123.netlify.app`. That's your app.
    To pick a nicer name, open **Project configuration → Change project name** (for example
-   `cairn-notes` → `https://cairn-notes.netlify.app`).
+   `my-slate` → `https://my-slate.netlify.app`).
 
 `netlify.toml` tells Netlify to skip the build when a commit doesn't change anything in `app/`, so an old
 setup that still syncs notes into this repo never uses up your free plan.
@@ -120,13 +120,13 @@ Installing from Safari like this costs nothing and never expires.
 
 ## Turn on sync (once per device)
 
-1. **Make a notes repo (once).** Go to <https://github.com/new>, name it `cairn-notes`, choose **Private**,
+1. **Make a notes repo (once).** Go to <https://github.com/new>, name it `slate-notes` (any name works), choose **Private**,
    and click **Create repository**. This repo holds only your notes — never use the app repo for them.
 2. Create a token at <https://github.com/settings/personal-access-tokens/new>:
    - Name: `Slate`, any expiration (paste a new one when it runs out)
-   - **Repository access → Only select repositories →** `your-name/cairn-notes`
+   - **Repository access → Only select repositories →** `your-name/slate-notes`
    - **Permissions → Repository permissions → Contents → Read and write**
-3. In Slate open **Settings → Sync**, enter `your-name/cairn-notes`, leave the branch and folder
+3. In Slate open **Settings → Sync**, enter `your-name/slate-notes`, leave the branch and folder
    empty, paste the token and press **Connect**.
 
 The token is stored only on that device. It's sent to GitHub and nowhere else. Slate warns you before
@@ -139,9 +139,9 @@ reads and writes only that folder.
 
 If you first set Slate up to sync into this app repo:
 
-1. Create the private `cairn-notes` repo and a token for it (steps 1–2 above).
+1. Create the private `slate-notes` repo and a token for it (steps 1–2 above).
 2. On one device that has all your notes, open **Settings → Sync → Change repo or token**, enter
-   `your-name/cairn-notes` and press **Save**. Slate copies every note on that device into the new
+   `your-name/slate-notes` and press **Save**. Slate copies every note on that device into the new
    repo.
 3. On your other devices, do the same — they'll pull the notes from the new repo.
 4. Check the new repo on GitHub, then delete the old `.md` files from this repo yourself (GitHub keeps them
