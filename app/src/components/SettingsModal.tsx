@@ -13,7 +13,7 @@ import { EncryptionSettings } from './EncryptionSettings'
 import { GoogleCalendarSettings } from './GoogleCalendarSettings'
 import { InstallSteps } from './InstallHint'
 import { TemplateSettings } from './TemplateSettings'
-import { Modal } from './ui'
+import { Modal, mod } from './ui'
 import { useUI } from './uiState'
 
 type Tab = 'sync' | 'appearance' | 'calendar' | 'templates' | 'install' | 'data' | 'about'
@@ -60,6 +60,8 @@ export function SettingsModal() {
                 <strong>On your iPhone:</strong> open this same link in Safari and use <em>Share → Add to Home Screen</em>.
                 <br />
                 <strong>On your Mac:</strong> open it in Safari and use <em>File → Add to Dock…</em>
+                <br />
+                <strong>On Windows:</strong> open it in Edge or Chrome and click <em>Install</em> at the right end of the address bar.
               </div>
               <div className="settings-note">
                 <strong>Dock icon stuck on a white square?</strong> Safari bakes web-app icons onto a tile, which stands out in a dark, clear
@@ -91,8 +93,8 @@ export function SettingsModal() {
                   privacy details
                 </a>
                 . Keyboard: {` `}
-                <kbd className="kbd">⌘K</kbd> search, <kbd className="kbd">⌘N</kbd> new page, <kbd className="kbd">/</kbd> blocks,{' '}
-                <kbd className="kbd">[[</kbd> link a page, <kbd className="kbd">⌘\</kbd> sidebar.
+                <kbd className="kbd">{mod}K</kbd> search, <kbd className="kbd">{mod}N</kbd> new page, <kbd className="kbd">/</kbd> blocks,{' '}
+                <kbd className="kbd">[[</kbd> link a page, <kbd className="kbd">{mod}\</kbd> sidebar.
               </p>
             </section>
           )}

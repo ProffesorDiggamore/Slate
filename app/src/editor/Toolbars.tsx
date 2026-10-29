@@ -35,6 +35,7 @@ import { useEffect, useRef, useState } from 'react'
 import { BLOCK_LABELS, currentBlock, turnInto, type BlockKind } from './blocks'
 import { lineCount } from './restructure'
 import { ShapeMenu } from './ShapeMenu'
+import { mod, shift } from '../components/ui'
 
 function Btn({ active, onClick, title, children }: { active?: boolean; onClick: () => void; title: string; children: React.ReactNode }) {
   return (
@@ -183,22 +184,22 @@ export function SelectionToolbar({ editor, onLinkPage }: { editor: Editor; onLin
               (s.multi ? <ShapeMenu editor={editor} onDone={() => setMode('main')} /> : <TurnIntoMenu editor={editor} onDone={() => setMode('main')} />)}
           </div>
           <span className="tb-sep" />
-          <Btn title="Bold (⌘B)" active={s.bold} onClick={() => editor.chain().focus().toggleBold().run()}>
+          <Btn title={`Bold (${mod}B)`} active={s.bold} onClick={() => editor.chain().focus().toggleBold().run()}>
             <Bold size={16} strokeWidth={2.25} />
           </Btn>
-          <Btn title="Italic (⌘I)" active={s.italic} onClick={() => editor.chain().focus().toggleItalic().run()}>
+          <Btn title={`Italic (${mod}I)`} active={s.italic} onClick={() => editor.chain().focus().toggleItalic().run()}>
             <Italic size={16} />
           </Btn>
-          <Btn title="Underline (⌘U)" active={s.underline} onClick={() => editor.chain().focus().toggleUnderline().run()}>
+          <Btn title={`Underline (${mod}U)`} active={s.underline} onClick={() => editor.chain().focus().toggleUnderline().run()}>
             <Underline size={16} />
           </Btn>
-          <Btn title="Strikethrough (⌘⇧S)" active={s.strike} onClick={() => editor.chain().focus().toggleStrike().run()}>
+          <Btn title={`Strikethrough (${mod}${shift}S)`} active={s.strike} onClick={() => editor.chain().focus().toggleStrike().run()}>
             <Strikethrough size={16} />
           </Btn>
-          <Btn title="Inline code (⌘E)" active={s.code} onClick={() => editor.chain().focus().toggleCode().run()}>
+          <Btn title={`Inline code (${mod}E)`} active={s.code} onClick={() => editor.chain().focus().toggleCode().run()}>
             <Code size={16} />
           </Btn>
-          <Btn title="Highlight (⌘⇧H)" active={s.highlight} onClick={() => editor.chain().focus().toggleHighlight().run()}>
+          <Btn title={`Highlight (${mod}${shift}H)`} active={s.highlight} onClick={() => editor.chain().focus().toggleHighlight().run()}>
             <Highlighter size={16} />
           </Btn>
           <span className="tb-sep" />
