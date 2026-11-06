@@ -1,9 +1,9 @@
-import { ClipboardCopy, Ellipsis, FileText, GitBranch, Menu, Star } from 'lucide-react'
+import { ChevronLeft, ClipboardCopy, Ellipsis, FileText, GitBranch, Menu, PanelLeft, Star } from 'lucide-react'
 import { useIsMobile, useNoteIcons } from '../lib/hooks'
 import { NoteIcon } from './NoteIcon'
 import { splitFrontmatter } from '../lib/markdown/frontmatter'
 import { titleOf } from '../lib/paths'
-import { useRoute } from '../lib/router'
+import { goBack, useRoute } from '../lib/router'
 import { setSettings, toggleFavorite, useSettings } from '../lib/settings'
 import { toast } from '../lib/toasts'
 import { getNote, useVault } from '../lib/vault'
@@ -12,13 +12,18 @@ import { SyncIndicator } from './SyncIndicator'
 import { mod, openMenu, type MenuEntry } from './ui'
 import { useUI } from './uiState'
 
-export function TopBar() {
+// Desktop: crumbs on the left, glass circle buttons on the right. Phones: the
+// bar floats over the page (which scrolls under it) with a glass circle at each
+// edge and the title centred between them, which (on pages with their own big
+// heading) only fades in once that heading scrolls away.
+export function TopBar({ scrolled = false }: { scrolled?: boolean }) {
   const route = useRoute()
   const mobile = useIsMobile()
   const sidebarOpen = useSettings((s) => s.sidebarOpen)
   const favorites = useSettings((s) => s.favorites)
   const sync = useSettings((s) => s.sync)
   const icons = useNoteIcons()
+  const syncStatus = useVault((s) => s.sync.status)
   const words = useVault((s) => {
     if (route.name !== 'note') return 0
     const c = s.files[route.path]?.content ?? ''
@@ -55,8 +60,14 @@ export function TopBar() {
               ? route.folder
                 ? `${route.folder} · Table`
                 : 'All pages · Table'
-              : 'Home'
-    crumbs = <div className="crumbs"><span className="crumb crumb-current">{label}</span></div>
+              : route.name === 'ai'
+                ? 'Ask Slate'
+                : 'Home'
+    crumbs = (
+      <div className="crumbs">
+        <span className="crumb crumb-current">{label}</span>
+      </div>
+    )
   }
 
   const pageMenu = (el: HTMLElement) => {
@@ -86,36 +97,61 @@ export function TopBar() {
     openMenu(el, [...extra, 'sep', ...noteMenu(path)], `${words.toLocaleString()} word${words === 1 ? '' : 's'}`)
   }
 
-  return (
-    <header className="topbar">
-      {(mobile || !sidebarOpen) && (
-        <button
-          type="button"
-          className="icon-btn"
-          aria-label="Open sidebar"
-          title={mobile ? 'Menu' : `Open sidebar (${mod}\\)`}
-          onClick={() => (mobile ? useUI.setState({ drawer: true }) : setSettings({ sidebarOpen: true }))}
-        >
-          <Menu size={19} />
+  // Phones: Home's own brand row is its header; Tasks is a tab root (menu);
+  // everything else came from somewhere (back).
+  const bare = mobile && route.name === 'home'
+  const reveal = mobile && (route.name === 'note' || route.name === 'tasks' || route.name === 'trash' || route.name === 'table')
+  const iconSize = mobile ? 20 : 17
+  let lead: React.ReactNode = null
+  if (mobile) {
+    lead =
+      route.name === 'tasks' ? (
+        <button type="button" className="circle-btn is-glass" aria-label="Open pages" title="Pages" onClick={() => useUI.setState({ drawer: true })}>
+          <Menu size={iconSize} />
         </button>
-      )}
+      ) : (
+        <button type="button" className="circle-btn is-glass" aria-label="Back" title="Back" onClick={goBack}>
+          <ChevronLeft size={22} strokeWidth={2} />
+        </button>
+      )
+  } else if (!sidebarOpen) {
+    lead = (
+      <button type="button" className="circle-btn is-glass" aria-label="Open sidebar" title={`Open sidebar (${mod}\\)`} onClick={() => setSettings({ sidebarOpen: true })}>
+        <PanelLeft size={iconSize} />
+      </button>
+    )
+  }
+  const fav = route.name === 'note' && favorites.includes(route.path)
+  // On a phone's note bar the sync button gives way to the title, so a sync
+  // problem shows as a dot on the ••• button instead.
+  const syncDot = mobile && route.name === 'note' && (syncStatus === 'error' || syncStatus === 'offline') ? syncStatus : undefined
+
+  return (
+    <header className={'topbar' + (scrolled ? ' is-scrolled' : '') + (bare ? ' is-bare' : '') + (reveal ? ' title-reveal' : '')}>
+      <div className="topbar-lead">{lead}</div>
       {crumbs}
       <div className="topbar-actions">
-        {!mobile && <SyncIndicator />}
-        {mobile && <SyncIndicator compact />}
+        {!(mobile && route.name === 'note') && <SyncIndicator compact={mobile} />}
         {route.name === 'note' && (
           <>
             <button
               type="button"
-              className={'icon-btn' + (favorites.includes(route.path) ? ' is-fav' : '')}
+              className={'circle-btn is-glass' + (fav ? ' is-fav' : '')}
               aria-label="Favorite"
-              title={favorites.includes(route.path) ? 'Remove from favorites' : 'Add to favorites'}
+              aria-pressed={fav}
+              title={fav ? 'Remove from favorites' : 'Add to favorites'}
               onClick={() => toggleFavorite(route.path)}
             >
-              <Star size={18} fill={favorites.includes(route.path) ? 'currentColor' : 'none'} />
+              <Star size={iconSize} fill={fav ? 'currentColor' : 'none'} />
             </button>
-            <button type="button" className="icon-btn" aria-label="Page options" onClick={(e) => pageMenu(e.currentTarget)}>
-              <Ellipsis size={19} />
+            <button
+              type="button"
+              className="circle-btn is-glass"
+              data-sync={syncDot}
+              aria-label={syncDot ? `Page options (sync ${syncDot === 'error' ? 'problem' : 'offline'})` : 'Page options'}
+              onClick={(e) => pageMenu(e.currentTarget)}
+            >
+              <Ellipsis size={iconSize} />
             </button>
           </>
         )}

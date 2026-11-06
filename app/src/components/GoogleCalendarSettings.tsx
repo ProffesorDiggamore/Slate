@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { googleConfigured, useGoogleAuth } from '../lib/google/auth'
 import { connectGoogleCalendar, disconnectGoogleCalendar, loadCalendars, refreshGoogle, useGoogleCal } from '../lib/google/store'
 import { setSettings, useSettings } from '../lib/settings'
+import { isNativeApp, PRIVACY_URL } from '../lib/native'
 
 // Settings → Calendar & time → Google Calendar: connect, pick calendars, disconnect.
 
@@ -18,6 +19,8 @@ export function GoogleCalendarSettings() {
     if (g && hasToken && !calendars) void loadCalendars()
   }, [g, hasToken, calendars])
 
+  // The App Store app has no web address for Google to send you back to.
+  if (isNativeApp) return null
   if (!googleConfigured()) {
     return (
       <div className="settings-note">
@@ -31,7 +34,7 @@ export function GoogleCalendarSettings() {
     <p className="muted small google-privacy">
       <ShieldCheck size={14} /> Your calendar goes straight from Google to this device — never to a Slate server — and is only kept while Slate
       is open.{' '}
-      <a href="/privacy.html" target="_blank" rel="noopener">
+      <a href={PRIVACY_URL} target="_blank" rel="noopener">
         Privacy
       </a>
     </p>

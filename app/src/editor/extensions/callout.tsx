@@ -131,68 +131,73 @@ function BoxView({ node, updateAttributes, editor, getPos }: ReactNodeViewProps)
     editor.chain().focus().setTextSelection(pos + 2).unsetCallout().run()
   }
 
+  // A card like a "Reminder": a small grey label row (the type's icon and name,
+  // which opens the type menu), then an optional title, then the content.
   return (
     <NodeViewWrapper className={'callout' + (foldable && !open ? ' is-closed' : '')} data-kind={style.kind}>
-      <div className="callout-icon-wrap" contentEditable={false} ref={menuRef}>
-        <button type="button" className="callout-icon" onClick={() => setMenu((m) => !m)} aria-label="Change callout type">
-          {style.icon}
-        </button>
-        {menu && (
-          <div className="popover callout-menu">
-            <div className="menu-label">Callout type</div>
-            {CALLOUT_KINDS.map((c) => (
+      <div className="callout-head" contentEditable={false}>
+        <div className="callout-icon-wrap" ref={menuRef}>
+          <button type="button" className="callout-label" onClick={() => setMenu((m) => !m)} aria-label={`${style.label} callout — change type`} aria-expanded={menu}>
+            <span className="callout-icon">{style.icon}</span>
+            <span className="callout-kind">{style.label}</span>
+          </button>
+          {menu && (
+            <div className="popover callout-menu">
+              <div className="menu-label">Callout type</div>
+              {CALLOUT_KINDS.map((c) => (
+                <button
+                  key={c.kind}
+                  type="button"
+                  className={'menu-item' + (c.kind === style.kind ? ' is-active' : '')}
+                  onClick={() => {
+                    updateAttributes({ kind: c.kind })
+                    setMenu(false)
+                  }}
+                >
+                  <span className="menu-emoji">{c.icon}</span>
+                  {c.label}
+                </button>
+              ))}
+              <div className="menu-sep" />
               <button
-                key={c.kind}
                 type="button"
-                className={'menu-item' + (c.kind === style.kind ? ' is-active' : '')}
+                className="menu-item"
                 onClick={() => {
-                  updateAttributes({ kind: c.kind })
+                  if (showTitle) updateAttributes({ title: '' })
+                  setShowTitle(!showTitle)
+                  setMenu(false)
+                  if (!showTitle) setTimeout(() => titleRef.current?.focus(), 0)
+                }}
+              >
+                {showTitle ? 'Remove title' : 'Add title'}
+              </button>
+              <button
+                type="button"
+                className="menu-item"
+                onClick={() => {
+                  updateAttributes({ fold: foldable ? '' : '+' })
+                  if (!foldable && !title) setShowTitle(true)
                   setMenu(false)
                 }}
               >
-                <span className="menu-emoji">{c.icon}</span>
-                {c.label}
+                {foldable ? 'Always show contents' : 'Make collapsible'}
               </button>
-            ))}
-            <div className="menu-sep" />
-            <button
-              type="button"
-              className="menu-item"
-              onClick={() => {
-                if (showTitle) updateAttributes({ title: '' })
-                setShowTitle(!showTitle)
-                setMenu(false)
-                if (!showTitle) setTimeout(() => titleRef.current?.focus(), 0)
-              }}
-            >
-              {showTitle ? 'Remove title' : 'Add title'}
-            </button>
-            <button
-              type="button"
-              className="menu-item"
-              onClick={() => {
-                updateAttributes({ fold: foldable ? '' : '+' })
-                if (!foldable && !title) setShowTitle(true)
-                setMenu(false)
-              }}
-            >
-              {foldable ? 'Always show contents' : 'Make collapsible'}
-            </button>
-            <button type="button" className="menu-item" onClick={unwrap}>
-              Turn into text
-            </button>
-          </div>
-        )}
+              <button type="button" className="menu-item" onClick={unwrap}>
+                Turn into text
+              </button>
+            </div>
+          )}
+        </div>
+        {foldable && <Chevron open={open} onClick={() => updateAttributes({ fold: open ? '-' : '+' })} />}
       </div>
       <div className="callout-body">
-        {foldable && <Chevron open={open} onClick={() => updateAttributes({ fold: open ? '-' : '+' })} />}
         {(showTitle || title || foldable) && (
           <input
             ref={titleRef}
             className="callout-title"
             contentEditable={false}
             value={title}
-            placeholder={style.label}
+            placeholder="Title"
             onChange={(e) => updateAttributes({ title: e.target.value })}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === 'ArrowDown') {

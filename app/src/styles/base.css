@@ -1,135 +1,292 @@
+/* Design tokens, Liquid Glass, motion and the shared keyframes. Every other
+   stylesheet (and every workstream) builds on these names, so rename nothing:
+   add new tokens instead. */
+
 :root {
-  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text', 'Segoe UI', Helvetica, 'Apple Color Emoji', Arial, sans-serif,
-    'Segoe UI Emoji', 'Segoe UI Symbol';
-  --font-serif: 'Iowan Old Style', 'Charter', Georgia, ui-serif, 'Times New Roman', serif;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text', 'Segoe UI', Helvetica, 'Apple Color Emoji', Arial,
+    sans-serif, 'Segoe UI Emoji', 'Segoe UI Symbol';
+  --font-serif: 'New York', ui-serif, 'Iowan Old Style', 'Charter', Georgia, 'Times New Roman', serif;
   --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
 
+  /* Soft, airy white: near-black titles, light grey secondary text, hairlines. */
   --bg: #ffffff;
-  --bg-sidebar: #f8f8f7;
-  --bg-hover: rgba(55, 53, 47, 0.06);
-  --bg-active: rgba(55, 53, 47, 0.09);
+  --bg-sidebar: #f7f7f8;
+  --bg-hover: rgba(0, 0, 0, 0.045);
+  --bg-active: rgba(0, 0, 0, 0.075);
   --bg-elevated: #ffffff;
-  --bg-subtle: #f7f6f3;
-  --bg-input: rgba(242, 241, 238, 0.6);
-  --text: #37352f;
-  --text-secondary: rgba(55, 53, 47, 0.68);
-  --text-faint: rgba(55, 53, 47, 0.42);
-  --border: rgba(55, 53, 47, 0.09);
-  --border-strong: rgba(55, 53, 47, 0.16);
-  --accent: #2383e2;
-  --accent-hover: #0077d4;
-  --accent-soft: rgba(35, 131, 226, 0.14);
+  --bg-subtle: #f4f4f5;
+  --bg-input: rgba(0, 0, 0, 0.045);
+  /* Older grouped lists (Tasks, Settings): a soft grey page with white cells. */
+  --bg-grouped: #f4f4f5;
+  --bg-cell: #ffffff;
+  /* Cards come two ways: white with a hairline, or a light grey fill. */
+  --card-bg: #ffffff;
+  --card-fill: #f5f5f6;
+  --card-border: rgba(0, 0, 0, 0.07);
+  /* Hairline circle buttons (back, +, share). */
+  --circle-bg: var(--card-bg);
+  --circle-border: var(--border);
+  --text: #0f0f10;
+  /* Body copy sits a step softer than titles: calm grey paragraphs under
+     near-black headings. */
+  --text-body: #4a4a51;
+  --text-secondary: #6e6e73;
+  --text-faint: #8e8e93;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.14);
+  --accent: #2f6bff;
+  --accent-hover: #2257db;
+  --accent-soft: rgba(47, 107, 255, 0.12);
   --accent-text: #ffffff;
-  --danger: #d44c47;
-  --danger-soft: rgba(212, 76, 71, 0.1);
-  --ok: #448361;
-  --shadow-pop: 0 0 0 1px rgba(15, 15, 15, 0.05), 0 3px 6px rgba(15, 15, 15, 0.08), 0 9px 24px rgba(15, 15, 15, 0.14);
-  --shadow-card: 0 0 0 1px rgba(15, 15, 15, 0.04), 0 2px 4px rgba(15, 15, 15, 0.04);
-  --mark-bg: rgba(255, 203, 0, 0.32);
-  --code-bg: rgba(135, 131, 120, 0.15);
-  --code-text: #eb5757;
-  --selection: rgba(35, 131, 226, 0.22);
-  --wikilink: #2a6fb5;
+  --danger: #ff3b30;
+  --danger-soft: rgba(255, 59, 48, 0.1);
+  --ok: #34c759;
+  --shadow-pop: 0 0 0 0.5px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.08), 0 24px 60px rgba(0, 0, 0, 0.1);
+  --shadow-card: 0 0 0 0.5px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --mark-bg: rgba(255, 204, 0, 0.35);
+  --code-bg: rgba(0, 0, 0, 0.05);
+  --code-text: #d1365f;
+  --selection: rgba(47, 107, 255, 0.2);
+  --wikilink: #2257db;
+  /* The two soft blobs that bleed in behind Home's header and floating bars. */
+  --glow-a: rgba(64, 128, 255, 0.2);
+  --glow-b: rgba(90, 210, 150, 0.16);
 
-  --c-blue: rgba(35, 131, 226, 0.08);
-  --c-green: rgba(68, 131, 97, 0.1);
-  --c-orange: rgba(217, 115, 13, 0.1);
-  --c-red: rgba(212, 76, 71, 0.1);
-  --c-yellow: rgba(203, 145, 47, 0.12);
-  --c-purple: rgba(144, 101, 176, 0.1);
-  --c-gray: rgba(120, 119, 116, 0.09);
+  --c-blue: rgba(0, 122, 255, 0.08);
+  --c-green: rgba(52, 199, 89, 0.1);
+  --c-orange: rgba(255, 149, 0, 0.1);
+  --c-red: rgba(255, 59, 48, 0.08);
+  --c-yellow: rgba(255, 204, 0, 0.14);
+  --c-purple: rgba(175, 82, 222, 0.09);
+  --c-gray: rgba(120, 120, 128, 0.09);
 
-  --graph-node: rgba(55, 53, 47, 0.55);
-  --graph-link: rgba(55, 53, 47, 0.16);
-  --graph-ghost: rgba(55, 53, 47, 0.35);
+  --graph-node: rgba(15, 15, 16, 0.42);
+  --graph-link: rgba(15, 15, 16, 0.12);
+  --graph-ghost: rgba(15, 15, 16, 0.28);
 
-  --radius: 6px;
-  --radius-lg: 10px;
-  --topbar-h: 46px;
+  /* Liquid Glass: floating chrome only (tab bar, toolbars, menus, toasts). */
+  --glass-bg: rgba(255, 255, 255, 0.58);
+  --glass-bg-strong: rgba(255, 255, 255, 0.84);
+  --glass-border: rgba(255, 255, 255, 0.75);
+  --glass-rim: rgba(0, 0, 0, 0.06);
+  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --glass-highlight: rgba(255, 255, 255, 0.85);
+  --glass-spec-a: rgba(255, 255, 255, 0.55);
+  --glass-spec-b: rgba(255, 255, 255, 0.18);
+  /* Inner depth: a bright lower lip, a faint inner edge and a soft shade at
+     the bottom, so glass reads as a thick lens rather than frosted plastic. */
+  --glass-depth: inset 0 -1px 0 rgba(255, 255, 255, 0.45), inset 0 0 0 0.5px rgba(255, 255, 255, 0.35), inset 0 -10px 18px -14px rgba(0, 0, 0, 0.1);
+  /* The light that follows a finger across a glass bar. */
+  --glass-sheen: rgba(255, 255, 255, 0.55);
+  /* A soft blob on glass, e.g. the tab bar's sliding indicator. */
+  --glass-fill: rgba(0, 0, 0, 0.055);
+  /* Clear enough on small controls to see shapes move through them... */
+  --glass-blur: blur(16px) saturate(180%) brightness(1.04);
+  /* ...and heavier on surfaces full of text (menus, toasts, sheets). */
+  --glass-blur-strong: blur(32px) saturate(180%);
+  /* Sheets, the palette and the Pages drawer: glass you can read a page of
+     text on. Mostly opaque; the heavy blur turns what's behind into a tint. */
+  --sheet-bg: color-mix(in srgb, var(--bg-elevated) 86%, transparent);
+  --sheet-blur: saturate(180%) blur(40px);
+  /* The raised pill behind the current sidebar item / settings tab. */
+  --nav-active-bg: var(--card-bg);
+  --nav-active-shadow: 0 0 0 0.5px var(--card-border), 0 1px 3px rgba(0, 0, 0, 0.06);
+
+  --radius: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-card: 20px;
+  --radius-pill: 999px;
+  --topbar-h: 48px;
+  --tabbar-h: 62px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
 
+  /* Springs, sampled into linear() so CSS can play them (damped-spring maths,
+     not hand-drawn curves). One bounce and done: each rises on the spring to a
+     single overshoot, then settles back without dipping under, so nothing
+     wobbles twice. bouncy goes ~6% past — buttons, checks, toggles, the tab
+     indicator, chips. snappy ~1.5% — menus, popovers, toasts, cards. smooth
+     has none — sheets, drawers, page changes. */
+  --spring-bouncy: linear(0, 0.0181, 0.0659, 0.135, 0.2181, 0.3091, 0.403, 0.4959, 0.5848, 0.6676, 0.7428, 0.8095, 0.8674, 0.9166, 0.9573, 0.9901, 1.0157, 1.0348, 1.0483, 1.057, 1.0618, 1.0633, 1.0629, 1.0617, 1.0596, 1.0568, 1.0532, 1.0491, 1.0445, 1.0396, 1.0344, 1.0292, 1.024, 1.019, 1.0144, 1.0103, 1.0067, 1.0038, 1.0017, 1.0004, 1);
+  --spring-smooth: linear(0, 0.0163, 0.058, 0.1166, 0.1853, 0.2591, 0.3342, 0.408, 0.4785, 0.5445, 0.6054, 0.6606, 0.7103, 0.7544, 0.7932, 0.8271, 0.8565, 0.8817, 0.9032, 0.9215, 0.9368, 0.9497, 0.9603, 0.9691, 0.9763, 0.9821, 0.9868, 0.9905, 0.9934, 0.9957, 0.9974, 0.9988, 0.9997, 1.0004, 1.0009, 1.0012, 1.0014, 1.0015, 1.0015, 1.0015, 1.0014, 1.0013, 1.0012, 1.0011, 1);
+  --spring-snappy: linear(0, 0.0271, 0.0946, 0.186, 0.2887, 0.3938, 0.4951, 0.5889, 0.6727, 0.7456, 0.8075, 0.8589, 0.9005, 0.9336, 0.9591, 0.9784, 0.9924, 1.0022, 1.0087, 1.0126, 1.0146, 1.0152, 1.0151, 1.0148, 1.0143, 1.0136, 1.0128, 1.0118, 1.0107, 1.0095, 1.0082, 1.007, 1.0057, 1.0046, 1.0035, 1.0025, 1.0016, 1.0009, 1.0004, 1.0001, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-bouncy: 0.55s;
+  --dur-smooth: 0.55s;
+  --dur-snappy: 0.45s;
+  /* Drop into any transition list to get the springy press release:
+     transition: background 0.15s, var(--press-transition); */
+  --press-transition: scale var(--dur-bouncy) var(--spring-bouncy);
+
   color-scheme: light;
+}
+
+/* Browsers without linear() get the nearest cubic-bezier instead. */
+@supports not (transition-timing-function: linear(0, 1)) {
+  :root {
+    --spring-bouncy: cubic-bezier(0.34, 1.2, 0.64, 1);
+    --spring-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+    --spring-snappy: cubic-bezier(0.3, 1.06, 0.5, 1);
+  }
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #191919;
-    --bg-sidebar: #202020;
-    --bg-hover: rgba(255, 255, 255, 0.055);
-    --bg-active: rgba(255, 255, 255, 0.09);
-    --bg-elevated: #252525;
-    --bg-subtle: #222222;
-    --bg-input: rgba(255, 255, 255, 0.055);
-    --text: rgba(255, 255, 255, 0.84);
-    --text-secondary: rgba(255, 255, 255, 0.52);
-    --text-faint: rgba(255, 255, 255, 0.3);
-    --border: rgba(255, 255, 255, 0.075);
-    --border-strong: rgba(255, 255, 255, 0.13);
-    --accent: #3b91ea;
-    --accent-hover: #5aa5f0;
-    --accent-soft: rgba(59, 145, 234, 0.2);
-    --danger: #e5675f;
-    --danger-soft: rgba(229, 103, 95, 0.13);
-    --shadow-pop: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 3px 6px rgba(0, 0, 0, 0.3), 0 9px 24px rgba(0, 0, 0, 0.45);
-    --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.06);
-    --mark-bg: rgba(255, 200, 0, 0.26);
-    --code-bg: rgba(135, 131, 120, 0.2);
-    --code-text: #ff7369;
-    --selection: rgba(59, 145, 234, 0.35);
-    --wikilink: #6fb1f5;
-    --c-blue: rgba(59, 145, 234, 0.13);
-    --c-green: rgba(82, 158, 114, 0.15);
-    --c-orange: rgba(217, 115, 13, 0.16);
-    --c-red: rgba(229, 103, 95, 0.15);
-    --c-yellow: rgba(203, 145, 47, 0.17);
-    --c-purple: rgba(157, 104, 211, 0.16);
-    --c-gray: rgba(255, 255, 255, 0.055);
-    --graph-node: rgba(255, 255, 255, 0.55);
-    --graph-link: rgba(255, 255, 255, 0.14);
-    --graph-ghost: rgba(255, 255, 255, 0.3);
+    --bg: #0d0d0f;
+    --bg-sidebar: #131315;
+    --bg-hover: rgba(255, 255, 255, 0.06);
+    --bg-active: rgba(255, 255, 255, 0.1);
+    --bg-elevated: #1a1a1d;
+    --bg-subtle: #1c1c1f;
+    --bg-input: rgba(255, 255, 255, 0.07);
+    --bg-grouped: #0d0d0f;
+    --bg-cell: #151517;
+    --card-bg: #19191c;
+    --card-fill: #212124;
+    --card-border: rgba(255, 255, 255, 0.1);
+    --circle-bg: #1f1f22;
+    --circle-border: rgba(255, 255, 255, 0.12);
+    --text: #f4f4f6;
+    --text-body: #c8c8ce;
+    --text-secondary: #9b9ba1;
+    --text-faint: #76767e;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --accent: #4d86ff;
+    --accent-hover: #6e9cff;
+    --accent-soft: rgba(77, 134, 255, 0.22);
+    --danger: #ff453a;
+    --danger-soft: rgba(255, 69, 58, 0.15);
+    --ok: #30d158;
+    --shadow-pop: 0 0 0 0.5px rgba(255, 255, 255, 0.08), 0 8px 24px rgba(0, 0, 0, 0.4), 0 24px 60px rgba(0, 0, 0, 0.5);
+    --shadow-card: 0 0 0 0.5px rgba(255, 255, 255, 0.06);
+    --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+    --mark-bg: rgba(255, 214, 10, 0.28);
+    --code-bg: rgba(255, 255, 255, 0.07);
+    --code-text: #ff6b8b;
+    --selection: rgba(77, 134, 255, 0.35);
+    --wikilink: #7ea6ff;
+    --glow-a: rgba(64, 128, 255, 0.22);
+    --glow-b: rgba(60, 190, 130, 0.14);
+    --c-blue: rgba(10, 132, 255, 0.14);
+    --c-green: rgba(48, 209, 88, 0.13);
+    --c-orange: rgba(255, 159, 10, 0.15);
+    --c-red: rgba(255, 69, 58, 0.14);
+    --c-yellow: rgba(255, 214, 10, 0.14);
+    --c-purple: rgba(191, 90, 242, 0.15);
+    --c-gray: rgba(118, 118, 128, 0.18);
+    --graph-node: rgba(244, 244, 246, 0.5);
+    --graph-link: rgba(244, 244, 246, 0.12);
+    --graph-ghost: rgba(244, 244, 246, 0.28);
+    --glass-bg: rgba(30, 30, 34, 0.52);
+    --glass-bg-strong: rgba(30, 30, 34, 0.84);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-rim: rgba(0, 0, 0, 0.5);
+    --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.3);
+    --glass-highlight: rgba(255, 255, 255, 0.16);
+    --glass-spec-a: rgba(255, 255, 255, 0.22);
+    --glass-spec-b: rgba(255, 255, 255, 0.07);
+    --glass-depth: inset 0 -1px 0 rgba(255, 255, 255, 0.06), inset 0 0 0 0.5px rgba(255, 255, 255, 0.08), inset 0 -10px 18px -14px rgba(0, 0, 0, 0.55);
+    --glass-sheen: rgba(255, 255, 255, 0.14);
+    --glass-blur: blur(16px) saturate(160%) brightness(1.08);
+    --glass-fill: rgba(255, 255, 255, 0.1);
+    --nav-active-bg: var(--bg-active);
+    --nav-active-shadow: none;
     color-scheme: dark;
   }
 }
 
 :root[data-theme='dark'] {
-  --bg: #191919;
-  --bg-sidebar: #202020;
-  --bg-hover: rgba(255, 255, 255, 0.055);
-  --bg-active: rgba(255, 255, 255, 0.09);
-  --bg-elevated: #252525;
-  --bg-subtle: #222222;
-  --bg-input: rgba(255, 255, 255, 0.055);
-  --text: rgba(255, 255, 255, 0.84);
-  --text-secondary: rgba(255, 255, 255, 0.52);
-  --text-faint: rgba(255, 255, 255, 0.3);
-  --border: rgba(255, 255, 255, 0.075);
-  --border-strong: rgba(255, 255, 255, 0.13);
-  --accent: #3b91ea;
-  --accent-hover: #5aa5f0;
-  --accent-soft: rgba(59, 145, 234, 0.2);
-  --danger: #e5675f;
-  --danger-soft: rgba(229, 103, 95, 0.13);
-  --shadow-pop: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 3px 6px rgba(0, 0, 0, 0.3), 0 9px 24px rgba(0, 0, 0, 0.45);
-  --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.06);
-  --mark-bg: rgba(255, 200, 0, 0.26);
-  --code-bg: rgba(135, 131, 120, 0.2);
-  --code-text: #ff7369;
-  --selection: rgba(59, 145, 234, 0.35);
-  --wikilink: #6fb1f5;
-  --c-blue: rgba(59, 145, 234, 0.13);
-  --c-green: rgba(82, 158, 114, 0.15);
-  --c-orange: rgba(217, 115, 13, 0.16);
-  --c-red: rgba(229, 103, 95, 0.15);
-  --c-yellow: rgba(203, 145, 47, 0.17);
-  --c-purple: rgba(157, 104, 211, 0.16);
-  --c-gray: rgba(255, 255, 255, 0.055);
-  --graph-node: rgba(255, 255, 255, 0.55);
-  --graph-link: rgba(255, 255, 255, 0.14);
-  --graph-ghost: rgba(255, 255, 255, 0.3);
+  --bg: #0d0d0f;
+  --bg-sidebar: #131315;
+  --bg-hover: rgba(255, 255, 255, 0.06);
+  --bg-active: rgba(255, 255, 255, 0.1);
+  --bg-elevated: #1a1a1d;
+  --bg-subtle: #1c1c1f;
+  --bg-input: rgba(255, 255, 255, 0.07);
+  --bg-grouped: #0d0d0f;
+  --bg-cell: #151517;
+  --card-bg: #19191c;
+  --card-fill: #212124;
+  --card-border: rgba(255, 255, 255, 0.1);
+  --circle-bg: #1f1f22;
+  --circle-border: rgba(255, 255, 255, 0.12);
+  --text: #f4f4f6;
+  --text-body: #c8c8ce;
+  --text-secondary: #9b9ba1;
+  --text-faint: #76767e;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --accent: #4d86ff;
+  --accent-hover: #6e9cff;
+  --accent-soft: rgba(77, 134, 255, 0.22);
+  --danger: #ff453a;
+  --danger-soft: rgba(255, 69, 58, 0.15);
+  --ok: #30d158;
+  --shadow-pop: 0 0 0 0.5px rgba(255, 255, 255, 0.08), 0 8px 24px rgba(0, 0, 0, 0.4), 0 24px 60px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 0 0 0.5px rgba(255, 255, 255, 0.06);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --mark-bg: rgba(255, 214, 10, 0.28);
+  --code-bg: rgba(255, 255, 255, 0.07);
+  --code-text: #ff6b8b;
+  --selection: rgba(77, 134, 255, 0.35);
+  --wikilink: #7ea6ff;
+  --glow-a: rgba(64, 128, 255, 0.22);
+  --glow-b: rgba(60, 190, 130, 0.14);
+  --c-blue: rgba(10, 132, 255, 0.14);
+  --c-green: rgba(48, 209, 88, 0.13);
+  --c-orange: rgba(255, 159, 10, 0.15);
+  --c-red: rgba(255, 69, 58, 0.14);
+  --c-yellow: rgba(255, 214, 10, 0.14);
+  --c-purple: rgba(191, 90, 242, 0.15);
+  --c-gray: rgba(118, 118, 128, 0.18);
+  --graph-node: rgba(244, 244, 246, 0.5);
+  --graph-link: rgba(244, 244, 246, 0.12);
+  --graph-ghost: rgba(244, 244, 246, 0.28);
+  --glass-bg: rgba(30, 30, 34, 0.52);
+  --glass-bg-strong: rgba(30, 30, 34, 0.84);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-rim: rgba(0, 0, 0, 0.5);
+  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --glass-highlight: rgba(255, 255, 255, 0.16);
+  --glass-spec-a: rgba(255, 255, 255, 0.22);
+  --glass-spec-b: rgba(255, 255, 255, 0.07);
+  --glass-depth: inset 0 -1px 0 rgba(255, 255, 255, 0.06), inset 0 0 0 0.5px rgba(255, 255, 255, 0.08), inset 0 -10px 18px -14px rgba(0, 0, 0, 0.55);
+  --glass-sheen: rgba(255, 255, 255, 0.14);
+  --glass-blur: blur(16px) saturate(160%) brightness(1.08);
+  --glass-fill: rgba(255, 255, 255, 0.1);
+  --nav-active-bg: var(--bg-active);
+  --nav-active-shadow: none;
   color-scheme: dark;
+}
+
+/* No blur available (or the person asked for less transparency): glass turns
+   into a plain raised surface so text never sits on a busy background. */
+/* !important so it also beats the palettes' tinted glass in extras.css. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --glass-bg: var(--bg-elevated) !important;
+    --glass-bg-strong: var(--bg-elevated) !important;
+    --sheet-bg: var(--bg-elevated) !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-bg: var(--bg-elevated) !important;
+    --glass-bg-strong: var(--bg-elevated) !important;
+    --sheet-bg: var(--bg-elevated) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    --topbar-h: 52px;
+  }
 }
 
 *,
@@ -156,6 +313,7 @@ body {
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.5;
+  letter-spacing: -0.006em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
@@ -195,9 +353,9 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent);
   outline-offset: 1px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 h1,
@@ -213,11 +371,381 @@ kbd,
   font-family: var(--font-sans);
   font-size: 11px;
   line-height: 1;
-  padding: 3px 5px;
-  border-radius: 4px;
-  color: var(--text-faint);
+  padding: 3px 6px;
+  border-radius: 6px;
+  color: var(--text-secondary);
   background: var(--bg-hover);
   white-space: nowrap;
+}
+
+/* Slim, quiet scrollbars like macOS; none at all on touch screens, where the
+   system shows its own while scrolling. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  * {
+    scrollbar-width: none;
+  }
+  ::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------ press feedback */
+
+/* Everything tappable dips a little under the finger and springs back. Uses the
+   separate `scale` property so it never fights a component's own transform.
+   Zero specificity: a component that sets its own transition should add
+   var(--press-transition) to its list to keep the springy release. */
+:where(button, [role='button'], summary, .pressable):not(:disabled) {
+  transition: var(--press-transition);
+}
+
+:where(button, [role='button'], summary, .pressable):not(:disabled):active {
+  scale: var(--press-scale, 0.96);
+  transition-duration: 80ms;
+  transition-timing-function: ease-out;
+}
+
+/* Wide rows would lurch at 0.96; they only give a little. */
+:where(.tree-row, .nav-item, .menu-item, .group-row, .palette-item, .list-row, .history-item, .option) {
+  --press-scale: 0.985;
+}
+
+/* ------------------------------------------------------------ circle buttons */
+
+/* Round hairline icon buttons: back, +, share, more. 40px on phones, 34 on desktop. */
+.circle-btn {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--circle-border);
+  background: var(--circle-bg);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    var(--press-transition);
+}
+
+/* Hover only where there is a pointer: a touch screen keeps :hover after a
+   tap, which would leave the button grey. */
+@media (hover: hover) {
+  .circle-btn:hover {
+    background: color-mix(in srgb, var(--circle-bg) 92%, var(--text));
+  }
+  .circle-btn.is-glass:hover {
+    background: color-mix(in srgb, var(--glass-bg) 88%, var(--text) 6%);
+  }
+}
+
+.circle-btn > svg {
+  flex: none;
+}
+
+/* Over glass or a glow, the button itself becomes a small piece of glass. */
+.circle-btn.is-glass {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow:
+    0 0 0 0.5px var(--glass-rim),
+    inset 0 1px 0 var(--glass-highlight),
+    var(--glass-depth),
+    0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.circle-btn.is-primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-text);
+}
+
+.circle-btn.is-primary:hover {
+  background: var(--accent-hover);
+}
+
+@media (hover: none) {
+  .circle-btn.is-primary:hover {
+    background: var(--accent);
+  }
+}
+
+.circle-btn.is-active {
+  color: var(--accent);
+}
+
+.circle-btn.is-quiet {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-secondary);
+}
+
+@media (hover: hover) {
+  .circle-btn.is-quiet:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+  }
+}
+
+@media (max-width: 760px) {
+  .circle-btn {
+    width: 40px;
+    height: 40px;
+  }
+  /* One glyph size for every phone circle, whatever each screen asked for. */
+  .circle-btn > svg {
+    width: 20px;
+    height: 20px;
+  }
+  /* A 40px circle still gets a 44px tap target. */
+  .circle-btn::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+  }
+}
+
+/* ---------------------------------------------------------------- liquid glass */
+
+/* Frosted, saturated, with a bright specular rim and an inner top highlight.
+   Positioning comes from the component (fixed bars, absolute menus); glass only
+   needs to be a containing block for its rim, hence the zero-specificity :where. */
+:where(.glass) {
+  position: relative;
+}
+
+.glass {
+  isolation: isolate;
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    0 0 0 0.5px var(--glass-rim),
+    inset 0 1px 0 var(--glass-highlight),
+    var(--glass-depth),
+    var(--glass-shadow);
+}
+
+/* The rim: a diagonal light streak masked down to a 1px ring. */
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--glass-spec-a), transparent 40%, transparent 62%, var(--glass-spec-b));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Text-heavy floating surfaces (menus, sheets) need more frosting to stay legible. */
+.glass-strong {
+  background: var(--glass-bg-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  backdrop-filter: var(--glass-blur-strong);
+}
+
+/* A glass control: presses in fast, releases with the bouncy spring, and (with
+   attachGlassSheen) a soft light follows the finger. */
+.glass-interactive {
+  transition: var(--press-transition);
+}
+
+.glass-interactive:active {
+  scale: 0.94;
+  transition-duration: 80ms;
+  transition-timing-function: ease-out;
+}
+
+/* glass-sheen: just the light that follows the pointer, no press (whole bars). */
+.glass-interactive::after,
+.glass-sheen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(90px circle at var(--mx, 50%) var(--my, 0%), var(--glass-sheen), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+/* On touch the light shows only while the finger is down: a tapped element
+   keeps :hover, which would leave a bright spot on the bar. */
+.glass-interactive:active::after,
+.glass-sheen:active::after {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .glass-interactive:hover::after,
+  .glass-sheen:hover::after {
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------- ambient glow */
+
+/* Two big blurred blobs (blue, mint) that drift slowly behind a header or a
+   floating bar. Sits at z-index -1: the host needs a stacking context
+   (`.main-scroll` is one; elsewhere use position: relative + isolation: isolate). */
+.ambient-glow,
+.ambient-glow-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 240px;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.ambient-glow {
+  top: 0;
+}
+
+.ambient-glow-bottom {
+  bottom: 0;
+}
+
+.ambient-glow::before,
+.ambient-glow::after,
+.ambient-glow-bottom::before,
+.ambient-glow-bottom::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  animation: glow-drift 18s ease-in-out infinite alternate;
+}
+
+.ambient-glow::before,
+.ambient-glow-bottom::before {
+  left: 4%;
+  width: 62%;
+  height: 200px;
+  background: radial-gradient(closest-side, var(--glow-a), transparent);
+}
+
+.ambient-glow::after,
+.ambient-glow-bottom::after {
+  right: 2%;
+  width: 52%;
+  height: 180px;
+  background: radial-gradient(closest-side, var(--glow-b), transparent);
+  animation-delay: -9s;
+  animation-direction: alternate-reverse;
+}
+
+.ambient-glow::before {
+  top: -70px;
+}
+
+.ambient-glow::after {
+  top: -40px;
+}
+
+.ambient-glow-bottom::before {
+  bottom: -80px;
+}
+
+.ambient-glow-bottom::after {
+  bottom: -60px;
+}
+
+/* ------------------------------------------------------------------ keyframes */
+
+/* Shared motion vocabulary. They use the separate translate/scale properties
+   so an animation never wipes out an element's positioning transform. Stagger
+   lists with: animation: fade-up var(--dur-snappy) var(--spring-snappy) both;
+   animation-delay: calc(var(--i, 0) * 40ms). */
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    scale: 0.9;
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    translate: 0 100%;
+  }
+}
+
+@keyframes drop-in {
+  from {
+    opacity: 0;
+    translate: 0 -10px;
+    scale: 0.96;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes check-pop {
+  from {
+    scale: 0.6;
+  }
+}
+
+@keyframes orb-breathe {
+  0%,
+  100% {
+    scale: 1;
+    opacity: 0.92;
+  }
+  50% {
+    scale: 1.045;
+    opacity: 1;
+  }
+}
+
+@keyframes glow-drift {
+  0% {
+    translate: 0 0;
+    scale: 1;
+  }
+  50% {
+    translate: 5% 8px;
+    scale: 1.08;
+  }
+  100% {
+    translate: -4% -6px;
+    scale: 0.95;
+  }
 }
 
 .spin {
@@ -230,11 +758,111 @@ kbd,
   }
 }
 
+/* ------------------------------------------------------------ page transitions */
+
+/* Route changes (router.ts) run inside a View Transition. Only the page area
+   moves: the old page fades out fast, the new one rises 8px into place. The rest
+   of the window (sidebar, top bar, tab bar) switches live with no crossfade.
+   Back / Forward that the browser animates itself (a swipe) skip this. */
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(root) {
+  display: none;
+}
+
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-old(slate-page) {
+  animation: fade-out-quick 0.16s ease-out both;
+}
+
+::view-transition-new(slate-page) {
+  animation: page-rise 0.42s var(--spring-smooth) both;
+}
+
+::view-transition-group(slate-page) {
+  animation-duration: 0.42s;
+}
+
+/* The floating chrome sits above the page on screen, but in a transition
+   everything without a name is drawn in the root picture, under the page's group:
+   the page's text would cover the closing drawer, the tab bar and toasts. While
+   a route transition runs (router.ts puts .vt-active on <html>) each gets a group
+   of its own, stacked above the page's, and shows live like the root. Only then:
+   a named element blurs nothing outside itself, so their glass would go flat. */
+.vt-active .drawer {
+  view-transition-name: slate-drawer;
+}
+
+.vt-active .tabbar-wrap {
+  view-transition-name: slate-tabbar;
+}
+
+.vt-active .install-banner {
+  view-transition-name: slate-banner;
+}
+
+.vt-active .toasts {
+  view-transition-name: slate-toasts;
+}
+
+::view-transition-old(slate-drawer),
+::view-transition-old(slate-tabbar),
+::view-transition-old(slate-banner),
+::view-transition-old(slate-toasts) {
+  display: none;
+}
+
+/* No animation on the group either, so it follows the element as it moves
+   (the tab bar sliding away) instead of easing from where it started. */
+::view-transition-group(slate-drawer),
+::view-transition-group(slate-tabbar),
+::view-transition-group(slate-banner),
+::view-transition-group(slate-toasts),
+::view-transition-new(slate-drawer),
+::view-transition-new(slate-tabbar),
+::view-transition-new(slate-banner),
+::view-transition-new(slate-toasts) {
+  animation: none;
+}
+
+@keyframes fade-out-quick {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes page-rise {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
+/* ------------------------------------------------------------- reduced motion */
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
     transition-duration: 0.01ms !important;
+  }
+  /* Still acknowledge a tap, just without movement. */
+  :where(button, [role='button'], summary, .pressable):not(:disabled):active,
+  .glass-interactive:active {
+    scale: none;
+    opacity: 0.7;
+  }
+  .ambient-glow::before,
+  .ambient-glow::after,
+  .ambient-glow-bottom::before,
+  .ambient-glow-bottom::after {
+    animation: none;
   }
 }

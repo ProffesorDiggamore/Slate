@@ -113,7 +113,7 @@ function HistoryBody({ path }: { path: string }) {
       <div className="history">
         <ol className="history-list">
           {commits.map((c, i) => (
-            <li key={c.sha}>
+            <li key={c.sha} style={{ '--i': i } as React.CSSProperties}>
               <button type="button" className={'history-item' + (sel === c.sha ? ' is-active' : '')} onClick={() => setSel(c.sha)}>
                 <span className="history-when">{i === 0 ? 'Last synced' : relativeTime(c.date)}</span>
                 <span className="history-date">{new Date(c.date).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>

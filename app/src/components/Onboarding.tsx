@@ -2,6 +2,7 @@ import { ArrowRight, CloudCog, Laptop } from 'lucide-react'
 import { useState } from 'react'
 import { openNote } from '../lib/router'
 import { setSettings } from '../lib/settings'
+import { isNativeApp } from '../lib/native'
 import { createNote } from '../lib/vault'
 import { SyncForm } from './SettingsModal'
 import { Logo } from './ui'
@@ -17,7 +18,7 @@ Slate is a calm place for your notes. Every page is a plain Markdown file, so it
 - Type \`/\` on an empty line for headings, to-dos, callouts, tables and more
 - Type \`[[\` to link another page — links show up as backlinks at the bottom of that page
 - Select text to bold it, highlight it, or turn it into a link
-- Press \`⌘K\` to search everything, \`⌘N\` for a new page
+- Press \`⌘K\` (\`Ctrl+K\` on Windows) to search everything, \`⌘N\` (\`Ctrl+N\`) for a new page
 
 ## Try it
 
@@ -26,7 +27,7 @@ Slate is a calm place for your notes. Every page is a plain Markdown file, so it
 - [ ] Open the Graph to see how pages connect
 
 > [!tip] Sync your devices
-> Open **Settings → Sync** to connect a free private GitHub repo. Then install Slate on your phone and computer from **Settings → Install app**.
+> Open **Settings → Sync** to connect a free private GitHub repo. Then ${isNativeApp ? 'connect the same repo in Slate on your other devices' : 'install Slate on your phone and computer from **Settings → Install app**'}.
 `
 
 export function Onboarding() {
@@ -35,14 +36,18 @@ export function Onboarding() {
     setSettings({ onboarded: true })
     openNote(createNote({ title: 'Getting started', content: GETTING_STARTED }))
   }
+  const rise = (i: number) => ({ '--i': i }) as React.CSSProperties
   return (
     <div className="onboarding">
+      <div className="ambient-glow" />
       <div className="onboarding-card">
         <Logo size={56} />
-        <h1>Welcome to Slate</h1>
-        <p className="muted">Notes that feel like Notion, files you own like Obsidian — on your computer and your phone, free.</p>
+        <h1 style={rise(1)}>Welcome to Slate</h1>
+        <p className="muted" style={rise(2)}>
+          Notes that feel like Notion, files you own like Obsidian — on your computer and your phone, free.
+        </p>
         {mode === 'choose' ? (
-          <div className="onboarding-options">
+          <div className="onboarding-options" style={rise(3)}>
             <button type="button" className="option" onClick={() => setMode('github')}>
               <CloudCog size={22} />
               <span>
@@ -61,7 +66,7 @@ export function Onboarding() {
             </button>
           </div>
         ) : (
-          <div className="onboarding-form">
+          <div className="onboarding-form" style={rise(3)}>
             <SyncForm />
             <button type="button" className="link-btn" onClick={() => setMode('choose')}>
               ← Back

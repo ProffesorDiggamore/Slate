@@ -1,5 +1,5 @@
 import { X } from 'lucide-react'
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { create } from 'zustand'
 import { dismissToast, useToasts } from '../lib/toasts'
 
@@ -33,16 +33,22 @@ export function closeMenu() {
 export function MenuHost() {
   const open = useMenu((s) => s.open)
   const ref = useRef<HTMLDivElement>(null)
-  const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
+  const [pos, setPos] = useState<{ left: number; top: number; origin: string } | null>(null)
 
   useLayoutEffect(() => {
     if (!open || !ref.current) return setPos(null)
-    const r = ref.current.getBoundingClientRect()
+    // Layout size, not the on-screen box: the menu is mid-way through its
+    // spring (scaled down) when this runs.
+    const r = { width: ref.current.offsetWidth, height: ref.current.offsetHeight }
     const vw = window.innerWidth
     const vh = window.innerHeight
+    const left = Math.max(8, Math.min(open.x, vw - r.width - 8))
+    const above = open.y + r.height > vh - 8
+    // Spring open from the point it was opened at (above it when flipped up).
     setPos({
-      left: Math.max(8, Math.min(open.x, vw - r.width - 8)),
-      top: open.y + r.height > vh - 8 ? Math.max(8, open.y - r.height - 8) : open.y,
+      left,
+      top: above ? Math.max(8, open.y - r.height - 8) : open.y,
+      origin: `${Math.max(0, Math.min(r.width, open.x - left))}px ${above ? 'bottom' : 'top'}`,
     })
   }, [open])
 
@@ -68,7 +74,7 @@ export function MenuHost() {
       ref={ref}
       className="popover context-menu"
       role="menu"
-      style={{ left: pos?.left ?? open.x, top: pos?.top ?? open.y, visibility: pos ? 'visible' : 'hidden' }}
+      style={{ left: pos?.left ?? open.x, top: pos?.top ?? open.y, visibility: pos ? 'visible' : 'hidden', '--origin': pos?.origin } as CSSProperties}
     >
       {open.title && <div className="menu-label">{open.title}</div>}
       {open.items.map((it, i) =>
@@ -98,6 +104,12 @@ export function MenuHost() {
 
 // -------------------------------------------------------------------- modal
 
+const calm = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const asSheet = () => window.matchMedia('(max-width: 760px)').matches
+
+/** Centred glass card on desktop; a bottom sheet with a grabber on phones that
+ *  can be swiped down to close. Escape, the ×, a tap outside and the swipe all
+ *  play a short exit before onClose runs. */
 export function Modal({
   title,
   onClose,
@@ -111,19 +123,81 @@ export function Modal({
   className?: string
   wide?: boolean
 }) {
+  const sheet = useRef<HTMLDivElement>(null)
+  const [closing, setClosing] = useState(false)
+  const closed = useRef(false)
+  const timer = useRef(0)
+  const latest = useRef(onClose)
+  const drag = useRef<{ y0: number; dy: number; lastY: number; lastT: number; v: number } | null>(null)
+
+  useLayoutEffect(() => {
+    latest.current = onClose
+  })
+
+  const requestClose = (ms = 230) => {
+    if (closed.current) return
+    closed.current = true
+    if (calm()) return latest.current()
+    setClosing(true)
+    timer.current = window.setTimeout(() => latest.current(), ms)
+  }
+
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && requestClose()
     document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      clearTimeout(timer.current)
+    }
+    // requestClose only reads refs, so one listener for the modal's lifetime.
+  }, [])
+
+  // Swipe the sheet down by its grabber or title bar (phones only).
+  const onDragStart = (e: ReactPointerEvent<HTMLElement>) => {
+    const el = sheet.current
+    if (!el || !asSheet() || e.button !== 0 || (e.target as HTMLElement).closest('button, a, input, select, textarea')) return
+    e.currentTarget.setPointerCapture(e.pointerId)
+    drag.current = { y0: e.clientY, dy: 0, lastY: e.clientY, lastT: performance.now(), v: 0 }
+    el.style.animation = 'none'
+    el.style.transition = 'none'
+  }
+  const onDragMove = (e: ReactPointerEvent<HTMLElement>) => {
+    const d = drag.current
+    if (!d || !sheet.current) return
+    const now = performance.now()
+    d.v = (e.clientY - d.lastY) / Math.max(1, now - d.lastT)
+    d.lastY = e.clientY
+    d.lastT = now
+    const raw = e.clientY - d.y0
+    // Dragging up only gives a little, like a rubber band.
+    d.dy = raw > 0 ? raw : raw / 5
+    sheet.current.style.translate = `0 ${d.dy}px`
+  }
+  const onDragEnd = () => {
+    const d = drag.current
+    const el = sheet.current
+    drag.current = null
+    if (!d || !el) return
+    if (d.dy > 120 || (d.dy > 24 && d.v > 0.45)) {
+      el.style.transition = 'translate 0.24s cubic-bezier(0.4, 0, 1, 1)'
+      el.style.translate = '0 100%'
+      requestClose(240)
+    } else {
+      el.style.transition = 'translate var(--dur-smooth) var(--spring-smooth)'
+      el.style.translate = '0 0'
+    }
+  }
+  const dragProps = { onPointerDown: onDragStart, onPointerMove: onDragMove, onPointerUp: onDragEnd, onPointerCancel: onDragEnd }
+
   return (
-    <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={`modal ${wide ? 'modal-wide' : ''} ${className}`} role="dialog" aria-modal="true" aria-label={title}>
+    <div className={'modal-backdrop' + (closing ? ' is-closing' : '')} onMouseDown={(e) => e.target === e.currentTarget && requestClose()}>
+      <div ref={sheet} className={`modal glass ${wide ? 'modal-wide' : ''} ${className}`} role="dialog" aria-modal="true" aria-label={title}>
+        <div className="sheet-grabber" aria-hidden="true" {...dragProps} />
         {title && (
-          <div className="modal-head">
+          <div className="modal-head" {...dragProps}>
             <h2>{title}</h2>
-            <button type="button" className="icon-btn" onClick={onClose} aria-label="Close">
-              <X size={18} />
+            <button type="button" className="circle-btn is-glass" onClick={() => requestClose()} aria-label="Close">
+              <X size={17} />
             </button>
           </div>
         )}
@@ -159,6 +233,7 @@ export function Kbd({ children }: { children: ReactNode }) {
 
 export const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
 export const mod = isMac ? '⌘' : 'Ctrl+'
+export const shift = isMac ? '⇧' : 'Shift+'
 
 // ------------------------------------------------------------------- toasts
 

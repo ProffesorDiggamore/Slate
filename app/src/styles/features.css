@@ -5,16 +5,18 @@
 /* ---- sidebar badge -------------------------------------------------------- */
 .nav-badge {
   margin-left: auto;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 9px;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 18px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  font-size: 11.5px;
+  font-weight: 650;
+  line-height: 20px;
   text-align: center;
+  font-variant-numeric: tabular-nums;
   background: var(--bg-active);
   color: var(--text-secondary);
+  animation: pop-in var(--dur-bouncy) var(--spring-bouncy) both;
 }
 .nav-badge.is-alert {
   background: var(--danger-soft);
@@ -23,11 +25,12 @@
 
 /* ---- tasks ---------------------------------------------------------------- */
 .tasks-filter {
-  margin: 14px 0 4px;
+  margin: 18px 0 4px;
   flex-wrap: wrap;
 }
-.task-group .home-section {
-  margin-top: 22px;
+.group-count {
+  font-weight: 500;
+  color: var(--text-faint);
 }
 .task-group-overdue {
   color: var(--danger);
@@ -35,30 +38,63 @@
 .task-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 34px;
+  gap: 12px;
+  min-height: 36px;
   padding: 4px 8px;
   margin: 0 -8px;
   border-radius: var(--radius);
+  transition: background 0.15s;
 }
 .task-row:hover {
   background: var(--bg-hover);
 }
+/* A rounded square: hairline when open; filled with the soft accent tint and an
+   accent tick when done, popping in on the bouncy spring. */
 .task-check {
-  width: 16px;
-  height: 16px;
+  appearance: none;
+  -webkit-appearance: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin: 0;
   flex: none;
-  accent-color: var(--accent);
+  border-radius: 6px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--card-bg);
   cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    scale var(--dur-bouncy) var(--spring-bouncy);
+}
+.task-check:active {
+  scale: 0.85;
+  transition-duration: 80ms;
+}
+.task-check:checked {
+  background: var(--accent-soft);
+  border-color: transparent;
+  animation: check-pop var(--dur-bouncy) var(--spring-bouncy);
+}
+.task-check:checked::after {
+  content: '';
+  width: 9px;
+  height: 5px;
+  border-left: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  transform: translate(0, -1px) rotate(-45deg);
 }
 .task-text {
   flex: 1;
   min-width: 0;
   overflow-wrap: anywhere;
+  transition: color 0.25s;
 }
 .task-row.is-done .task-text {
-  color: var(--text-faint);
+  color: var(--accent);
   text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--accent) 70%, transparent);
 }
 .task-due {
   position: relative;
@@ -66,9 +102,9 @@
   align-items: center;
   gap: 4px;
   flex: none;
-  height: 22px;
-  padding: 0 7px;
-  border-radius: 11px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 12px;
   font-size: 12px;
   color: var(--text-secondary);
   background: var(--bg-subtle);
@@ -119,9 +155,6 @@
 }
 
 /* ---- home agenda ---------------------------------------------------------- */
-.agenda .home-section {
-  margin-top: 6px;
-}
 .agenda-more {
   margin-left: auto;
   display: inline-flex;
@@ -132,22 +165,26 @@
 .agenda-refresh {
   margin-bottom: 8px;
 }
-.agenda-list {
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--radius-lg);
-  background: var(--bg-subtle);
-  padding: 4px;
-  margin-bottom: 8px;
+.group.is-flush > * + *::before {
+  left: 14px;
+}
+.group.is-flush .task-row {
+  margin: 0;
+  min-height: 50px;
+  padding: 8px 16px;
+  border-radius: 0;
 }
 .agenda-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 8px;
-  border-radius: var(--radius);
+  min-height: 48px;
+  padding: 8px 16px;
   text-align: left;
   color: var(--text);
+  transition:
+    background 0.15s,
+    var(--press-transition);
 }
 .agenda-row:hover {
   background: var(--bg-hover);
@@ -174,15 +211,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.agenda-tasks {
-  margin-bottom: 8px;
-}
-.agenda-empty {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
 }
 
 /* ---- page properties ------------------------------------------------------ */
@@ -315,12 +343,20 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 30px;
-  padding: 0 8px;
-  border-radius: var(--radius);
+  height: 34px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
   background: var(--bg-input);
-  box-shadow: inset 0 0 0 1px var(--border-strong);
   color: var(--text-faint);
+  transition:
+    box-shadow 0.15s,
+    background 0.15s;
+}
+.table-search:focus-within {
+  background: var(--card-bg);
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 0 0 4px var(--accent-soft);
 }
 .table-search input {
   border: 0;
@@ -340,10 +376,17 @@
 .table-toolbar .btn {
   margin-left: auto;
 }
+/* The table is a white card with a hairline; rows fade in one after another. */
 .table-scroll {
   overflow-x: auto;
-  border-radius: var(--radius-lg);
-  box-shadow: inset 0 0 0 1px var(--border);
+  border-radius: var(--radius-card);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  animation: fade-up var(--dur-smooth) var(--spring-smooth) both;
+}
+.db-table tbody tr {
+  animation: fade-in 0.4s var(--ease-out) both;
+  animation-delay: calc(min(var(--i, 0), 20) * 25ms);
 }
 .db-table {
   width: 100%;
@@ -353,7 +396,7 @@
 .db-table th,
 .db-table td {
   border-bottom: 1px solid var(--border);
-  padding: 2px 4px;
+  padding: 3px 6px;
   text-align: left;
   vertical-align: middle;
   min-width: 110px;
@@ -368,12 +411,15 @@
 .db-table tbody tr:last-child td {
   border-bottom: 0;
 }
+.db-table thead th {
+  background: var(--card-fill);
+}
 .table-head {
   display: flex;
   align-items: center;
   gap: 4px;
   width: 100%;
-  padding: 6px 4px;
+  padding: 8px 4px;
   font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
@@ -409,9 +455,9 @@
   padding: 4px;
 }
 .table-add-form input {
-  height: 28px;
-  padding: 0 6px;
-  border-radius: var(--radius);
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 9px;
   border: 0;
   background: var(--bg-input);
   box-shadow: inset 0 0 0 1px var(--border-strong);
@@ -436,21 +482,31 @@
   max-height: 60vh;
   overflow-y: auto;
 }
+.history-list > li {
+  animation: fade-up var(--dur-snappy) var(--spring-snappy) both;
+  animation-delay: calc(min(var(--i, 0), 14) * 35ms);
+}
 .history-item {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   width: 100%;
-  padding: 7px 9px;
-  border-radius: var(--radius);
+  padding: 9px 12px;
+  border-radius: 14px;
   text-align: left;
   color: var(--text);
+  transition:
+    background 0.15s,
+    var(--press-transition);
 }
 .history-item:hover {
   background: var(--bg-hover);
 }
 .history-item.is-active {
   background: var(--accent-soft);
+}
+.history-item.is-active .history-when {
+  color: var(--accent);
 }
 .history-when {
   font-weight: 600;
@@ -483,9 +539,10 @@
   margin: 0;
   max-height: 46vh;
   overflow: auto;
-  padding: 8px 0;
-  border-radius: var(--radius);
-  background: var(--code-bg);
+  padding: 10px 0;
+  border-radius: var(--radius-lg);
+  background: var(--card-fill);
+  border: 1px solid var(--card-border);
   font: 12.5px/1.55 var(--font-mono);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -532,11 +589,27 @@
   align-items: center;
   text-align: center;
   gap: 10px;
+  padding: 28px 24px;
+  border-radius: var(--radius-card);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow-soft);
   color: var(--text-secondary);
+  animation: pop-in var(--dur-smooth) var(--spring-smooth) both;
+}
+.locked-card > svg:first-child {
+  color: var(--accent);
+  box-sizing: content-box;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--accent-soft);
 }
 .locked-card h2 {
   margin: 4px 0 0;
   color: var(--text);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 .locked-card .passphrase-form {
   width: 100%;
@@ -574,10 +647,12 @@
 .template-list {
   list-style: none;
   margin: 8px 0 12px;
-  padding: 0;
+  padding: 8px 14px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  border-radius: var(--radius-lg);
+  background: var(--card-fill);
 }
 .template-list .link-btn {
   display: inline-flex;
@@ -611,6 +686,7 @@
 }
 
 /* ---- turn lines into (paste chip + menu) ---------------------------------- */
+/* A small glass bar that drops in under the pasted lines. */
 .paste-options {
   position: fixed;
   z-index: 35;
@@ -619,18 +695,19 @@
   flex-wrap: wrap;
   gap: 2px;
   max-width: min(560px, calc(100vw - 16px));
-  padding: 4px;
-  border-radius: var(--radius-lg);
-  background: var(--bg-elevated);
-  box-shadow: var(--shadow-pop);
+  padding: 5px;
+  border-radius: 22px;
+  background: var(--glass-bg-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  backdrop-filter: var(--glass-blur-strong);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    0 0 0 0.5px var(--glass-rim),
+    inset 0 1px 0 var(--glass-highlight),
+    var(--glass-depth),
+    var(--glass-shadow);
   font-size: 13px;
-  animation: paste-in 0.16s ease-out;
-}
-@keyframes paste-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
+  animation: drop-in var(--dur-snappy) var(--spring-snappy) both;
 }
 @media (prefers-reduced-motion: reduce) {
   .paste-options {
@@ -652,11 +729,15 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 28px;
-  padding: 0 9px;
-  border-radius: var(--radius);
+  height: 30px;
+  padding: 0 11px;
+  border-radius: var(--radius-pill);
   color: var(--text);
   white-space: nowrap;
+  transition:
+    background 0.15s,
+    box-shadow 0.15s,
+    var(--press-transition);
 }
 .paste-chip:hover {
   background: var(--bg-hover);
@@ -665,7 +746,7 @@
   color: var(--text-secondary);
 }
 .paste-chip.is-best {
-  box-shadow: inset 0 0 0 1px var(--accent);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
 }
 .paste-chip.is-active {
   background: var(--accent-soft);
@@ -686,6 +767,32 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 220px;
+}
+/* The selection toolbar's "turn these lines into…" dropdown: the same springy
+   glass as the single-line Turn into menu next to it. */
+.shape-menu {
+  position: absolute;
+  top: 38px;
+  left: -4px;
+  z-index: 60;
+  width: 250px;
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 6px;
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  backdrop-filter: var(--glass-blur-strong);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    0 0 0 0.5px var(--glass-rim),
+    inset 0 1px 0 var(--glass-highlight),
+    var(--glass-depth),
+    var(--shadow-pop);
+  color: var(--text);
+  font-size: 14px;
+  transform-origin: top left;
+  animation: pop-in var(--dur-snappy) var(--spring-snappy) both;
 }
 .shape-menu .menu-title {
   padding: 6px 10px 4px;

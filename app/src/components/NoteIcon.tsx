@@ -173,7 +173,7 @@ export const NoteIcon = memo(function NoteIcon({ value, size = 18, className }: 
     )
   }
   return (
-    <span className={className} style={{ fontSize: size * 0.95, lineHeight: 1 }}>
+    <span className={'note-emoji ' + (className ?? '')} style={{ fontSize: size * 0.95, lineHeight: 1 }}>
       {value}
     </span>
   )

@@ -75,12 +75,13 @@
     <main>
       <p><a href="/">← Back to Slate</a></p>
       <h1>Privacy</h1>
-      <p class="muted">Last updated October 18, 2026</p>
+      <p class="muted">Last updated November 5, 2026</p>
 
       <div class="card">
         <strong>The short version:</strong> Slate has no server, no accounts and no analytics. Your notes are stored in your browser on your
         own device and, if you turn on sync, in a GitHub repository that you own. Whoever runs this website can't see your notes, your
-        calendar or your passwords — the site only sends the app's code to your browser.
+        calendar or your passwords — the site only sends the app's code to your browser. The AI assistant is optional and off until you add
+        your own key; then your questions go straight from your device to the AI service you picked, and only when you ask.
       </div>
 
       <h2>What's kept on your device</h2>
@@ -88,6 +89,11 @@
         <li>Your notes, trash and settings, in your browser's storage for this site.</li>
         <li>Your GitHub access token, if you turn on sync.</li>
         <li>A Google access token, if you connect Google Calendar. It expires on its own within an hour.</li>
+        <li>
+          Your AI key, if you set up the AI assistant — in the iOS Keychain in the iPhone / iPad app, in your browser's storage for this site
+          on the web. It's never added to your settings, never synced to GitHub and never sent anywhere except to that AI service.
+        </li>
+        <li>Your AI chats, if you use the assistant. They stay on this device and aren't synced.</li>
       </ul>
       <p>Each browser keeps its own copy. Someone else using Slate on their own device has a completely separate, private copy.</p>
 
@@ -100,7 +106,15 @@
         <li>
           <strong>Google Calendar</strong> (<code>www.googleapis.com</code>) — only if you connect it. See below.
         </li>
-        <li><strong>Nowhere else.</strong> The site tells your browser to block every other destination, so this isn't just a promise.</li>
+        <li>
+          <strong>The AI service you choose</strong> — only if you set up the AI assistant with your own key, and only when you ask it something.
+          See below.
+        </li>
+        <li>
+          <strong>Nowhere else.</strong> The website tells your browser to block every other destination, so this isn't just a promise. (The
+          App Store app has no list of AI services, since you can point it at any one you like, but it still only talks to the one you set
+          up.)
+        </li>
       </ul>
       <p>
         Links and images you add to your own notes load from wherever they point, like in any editor. The website host (Netlify) keeps the
@@ -125,9 +139,42 @@
         including the Limited Use requirements.
       </p>
 
+      <h2>AI assistant</h2>
+      <p>
+        The AI assistant is optional and off until you set it up in Settings → AI. Slate doesn't run an AI service or sell access to one: you
+        bring your own key from the service you choose — ChatGPT (OpenAI), Claude (Anthropic), Gemini (Google), OpenRouter, Groq, Mistral,
+        DeepSeek, xAI, or a model running on your own computer such as Ollama or LM Studio.
+      </p>
+      <ul>
+        <li>
+          <strong>Only when you ask.</strong> Nothing is sent in the background. When you send a message or use an AI action on selected text,
+          Slate sends that message plus whatever you chose to include — the page you attached, the text you selected, or short excerpts of
+          matching notes if you turned on “Search my notes”.
+        </li>
+        <li>
+          <strong>Straight to the service.</strong> The request goes directly from your device to that service using your key. It never passes
+          through a server run by Slate, and nobody running Slate can see it.
+        </li>
+        <li>
+          <strong>You're asked first.</strong> Before the first message to each service, Slate asks for your permission and names the service.
+          You can take that back in Settings → AI.
+        </li>
+        <li><strong>Encrypted pages are never sent</strong>, even when they're attached or match a search.</li>
+        <li>
+          <strong>The service's own policy applies.</strong> What happens to your messages there — how long they're kept, and whether they're
+          used for training — is up to that service and your account with it. Check its privacy policy and settings.
+        </li>
+      </ul>
+
       <h2>Removing your data</h2>
       <ul>
         <li><strong>From a device:</strong> Settings → Data → Reset this device.</li>
+        <li>
+          <strong>AI:</strong> Settings → AI → Remove key deletes your key from this device. You can also delete the key itself on the AI
+          service's website, which stops it working everywhere. In the iPhone / iPad app, deleting the app doesn't remove the key straight
+          away (iOS keeps Keychain items after an app is deleted); Slate clears it if it's installed again. To remove it now, use Remove key
+          or Reset this device before deleting the app.
+        </li>
         <li>
           <strong>Google:</strong> Settings → Calendar &amp; time → Disconnect, which also cancels Slate's access. You can check at
           <a href="https://myaccount.google.com/permissions" rel="noopener noreferrer">myaccount.google.com/permissions</a>.

@@ -1,14 +1,25 @@
 /* ------------------------------------------------------------------ prose */
 
+/* Motion comes from the shared spring tokens in base.css; the fallbacks keep
+   the editor springy on its own. */
+.prose,
+.note-page {
+  --ed-bouncy: var(--spring-bouncy, cubic-bezier(0.34, 1.32, 0.64, 1));
+  --ed-snappy: var(--spring-snappy, cubic-bezier(0.3, 1.12, 0.5, 1));
+  --ed-dur-bouncy: var(--dur-bouncy, 0.7s);
+  --ed-dur-snappy: var(--dur-snappy, 0.45s);
+}
+
 .editor-wrap {
   position: relative;
 }
 
+/* Body text a touch softer than the titles, with room to breathe. */
 .prose {
   outline: none;
   font-size: 16px;
-  line-height: 1.6;
-  color: var(--text);
+  line-height: 1.7;
+  color: var(--text-body, var(--text));
   caret-color: var(--text);
   word-wrap: break-word;
   white-space: pre-wrap;
@@ -28,7 +39,7 @@
 .prose p {
   margin: 0;
   padding: 3px 2px;
-  min-height: 1.6em;
+  min-height: 1.7em;
 }
 
 .prose h1,
@@ -37,24 +48,30 @@
 .prose h4,
 .prose h5,
 .prose h6 {
-  font-weight: 650;
+  color: var(--text);
+  font-weight: 700;
   line-height: 1.3;
   padding: 3px 2px;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.012em;
 }
 
 .prose h1 {
   font-size: 1.875em;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
   margin-top: 1.1em;
 }
 
 .prose h2 {
   font-size: 1.5em;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
   margin-top: 0.9em;
 }
 
 .prose h3 {
   font-size: 1.25em;
+  letter-spacing: -0.015em;
   margin-top: 0.7em;
 }
 
@@ -62,6 +79,7 @@
 .prose h5,
 .prose h6 {
   font-size: 1.05em;
+  font-weight: 650;
   margin-top: 0.6em;
 }
 
@@ -71,6 +89,7 @@
 
 .prose strong {
   font-weight: 650;
+  color: var(--text);
 }
 
 .prose a {
@@ -125,7 +144,7 @@
   padding: 2px;
 }
 
-/* lists */
+/* lists: small grey markers, so the words lead */
 
 .prose ul,
 .prose ol {
@@ -154,31 +173,52 @@
 }
 
 .prose li::marker {
-  color: var(--text);
+  color: var(--text-faint);
 }
+
+.prose ul > li::marker {
+  font-size: 0.85em;
+}
+
+.prose ol > li::marker {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* to-dos: a soft rounded square. Checking one fills it with the accent tint,
+   the tick springs in, and the words turn accent with a line through. */
 
 .prose ul[data-type='taskList'] {
   list-style: none;
-  padding-left: 0.2em;
+  padding-left: 0.1em;
 }
 
 .prose ul[data-type='taskList'] ul[data-type='taskList'] {
-  padding-left: 1.5em;
+  padding-left: 1.6em;
 }
 
 .prose ul[data-type='taskList'] > li {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 10px;
   padding-left: 0;
 }
 
 .prose ul[data-type='taskList'] > li > label {
+  position: relative;
   flex: none;
   user-select: none;
   -webkit-user-select: none;
-  margin-top: 0.42em;
+  /* Centre the 20px box on the first line: paragraph padding + half a line. */
+  margin-top: calc(3px + 0.85em - 10px);
   line-height: 0;
+}
+
+/* A bigger target than the box (taps on the label toggle it), reaching left, not into the text. */
+.prose ul[data-type='taskList'] > li > label::before {
+  content: '';
+  position: absolute;
+  inset: -6px -3px -6px -7px;
 }
 
 .prose ul[data-type='taskList'] > li > div {
@@ -189,40 +229,81 @@
 .prose ul[data-type='taskList'] > li input[type='checkbox'] {
   appearance: none;
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  border-radius: 3px;
-  border: 1.5px solid var(--text-secondary);
-  background: transparent;
-  cursor: pointer;
+  position: relative;
   display: grid;
   place-items: center;
-  transition: background 0.12s;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border-radius: 6px;
+  border: 1.5px solid var(--border-strong);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform var(--ed-dur-bouncy) var(--ed-bouncy);
 }
 
-.prose ul[data-type='taskList'] > li input[type='checkbox']:hover {
-  background: var(--bg-hover);
+.prose ul[data-type='taskList'] > li input[type='checkbox']:hover:not(:checked) {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border-strong));
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.prose ul[data-type='taskList'] > li input[type='checkbox']:active {
+  transform: scale(0.84);
+  transition-duration: 0.2s, 0.2s, 80ms;
+}
+
+.prose ul[data-type='taskList'] > li input[type='checkbox']:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
 }
 
 .prose ul[data-type='taskList'] > li input[type='checkbox']:checked {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-soft);
+  border-color: transparent;
 }
 
-.prose ul[data-type='taskList'] > li input[type='checkbox']:checked::after {
+/* The tick: transitions (not a keyframe) so it pops when you check it, not on every page load. */
+.prose ul[data-type='taskList'] > li input[type='checkbox']::after {
   content: '';
   width: 9px;
   height: 5px;
-  border-left: 2px solid #fff;
-  border-bottom: 2px solid #fff;
-  transform: translate(0, -1px) rotate(-45deg);
+  margin-top: -2px;
+  border-left: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  border-radius: 1px;
+  opacity: 0;
+  transform: rotate(-45deg) scale(0.3);
+  transition:
+    transform var(--ed-dur-bouncy) var(--ed-bouncy),
+    opacity 0.12s ease;
+}
+
+.prose ul[data-type='taskList'] > li input[type='checkbox']:checked::after {
+  opacity: 1;
+  transform: rotate(-45deg) scale(1);
+}
+
+.prose ul[data-type='taskList'] > li > div > p {
+  text-decoration-line: line-through;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1.5px;
+  transition:
+    color 0.3s ease,
+    text-decoration-color 0.3s ease;
 }
 
 .prose ul[data-type='taskList'] > li[data-checked='true'] > div > p {
-  color: var(--text-faint);
-  text-decoration: line-through;
-  text-decoration-color: var(--text-faint);
+  color: var(--accent);
+  text-decoration-color: color-mix(in srgb, var(--accent) 75%, transparent);
+}
+
+@media (pointer: coarse) {
+  .prose ul[data-type='taskList'] > li > label::before {
+    inset: -11px -4px -11px -12px;
+  }
 }
 
 /* placeholders */
@@ -495,37 +576,53 @@
   color: #ffa657;
 }
 
-/* callouts */
+/* callouts: a calm card like a "Reminder" — hairline border, a faint glow
+   tinted by the type, a small grey label row with the type's icon, then the
+   content. Colour stays a whisper; the icon says what kind it is. */
 
 .callout {
-  display: flex;
-  gap: 10px;
-  margin: 6px 0;
-  padding: 14px 16px 14px 12px;
-  border-radius: var(--radius);
-  background: var(--c-gray);
+  --callout-tint: var(--c-gray);
+  margin: 10px 0;
+  padding: 8px 16px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--card-border, var(--border));
+  background:
+    radial-gradient(130% 100% at 0% 0%, var(--callout-tint), transparent 58%),
+    var(--card-bg, var(--bg-elevated));
+  box-shadow:
+    inset 0 0 24px -10px var(--callout-tint),
+    0 1px 2px rgba(0, 0, 0, 0.03);
+  color: var(--text);
 }
 
 .callout[data-kind='note'],
 .callout[data-kind='info'] {
-  background: var(--c-blue);
+  --callout-tint: var(--c-blue);
 }
 .callout[data-kind='tip'],
 .callout[data-kind='success'] {
-  background: var(--c-green);
+  --callout-tint: var(--c-green);
 }
 .callout[data-kind='warning'] {
-  background: var(--c-orange);
+  --callout-tint: var(--c-orange);
 }
 .callout[data-kind='danger'],
 .callout[data-kind='bug'] {
-  background: var(--c-red);
+  --callout-tint: var(--c-red);
 }
 .callout[data-kind='question'] {
-  background: var(--c-yellow);
+  --callout-tint: var(--c-yellow);
 }
 .callout[data-kind='example'] {
-  background: var(--c-purple);
+  --callout-tint: var(--c-purple);
+}
+
+.callout-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 30px;
+  margin: 0 -8px 2px;
 }
 
 .callout-icon-wrap {
@@ -533,18 +630,43 @@
   flex: none;
 }
 
-.callout-icon {
-  font-size: 20px;
-  line-height: 1;
-  width: 28px;
+.callout-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   height: 28px;
-  border-radius: var(--radius);
-  display: grid;
-  place-items: center;
+  padding: 0 9px 0 8px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  /* Presses through the shared scale (base.css), one spring, no double dip. */
+  --press-scale: 0.95;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    var(--press-transition);
 }
 
-.callout-icon:hover {
+.callout-label[aria-expanded='true'] {
   background: var(--bg-hover);
+  color: var(--text);
+}
+
+@media (hover: hover) {
+  .callout-label:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+  }
+}
+
+.callout-label:active {
+  transition-duration: 0.15s, 0.15s, 80ms;
+}
+
+.callout-icon {
+  font-size: 15px;
+  line-height: 1;
 }
 
 .callout-menu {
@@ -554,12 +676,18 @@
   width: 220px;
   max-height: 340px;
   overflow-y: auto;
+  transform-origin: top left;
+  animation: ed-drop-in var(--ed-dur-snappy) var(--ed-snappy) both;
+}
+
+/* Collapsible callouts: the arrow sits at the end of the label row. */
+.callout .callout-head .toggle-chevron {
+  float: none;
+  margin: 0 0 0 auto;
 }
 
 .callout-body {
-  flex: 1;
   min-width: 0;
-  padding-top: 1px;
 }
 
 .callout-title {
@@ -570,7 +698,7 @@
   background: transparent;
   font-weight: 650;
   font-size: 1em;
-  padding: 3px 2px;
+  padding: 2px 2px;
   color: var(--text);
 }
 
@@ -705,60 +833,173 @@
 
 /* ---------------------------------------------------------------- bubbles */
 
+/* The selection bubble speaks the same language as the phone toolbar: a
+   Liquid Glass pill (the shared .glass class adds the specular rim), light grey
+   icons, the active ones dark on a soft fill, thin dividers. */
+
 .bubble {
   z-index: 30;
 }
 
 .tb-row,
 .tb-link-form {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 1px;
   padding: 4px;
-  border-radius: 9px;
-  background: var(--bg-elevated);
-  box-shadow: var(--shadow-pop);
+  border-radius: var(--radius-pill, 999px);
+  /* Surface, blur, rim and highlight come from the shared .glass class. */
+  transform-origin: 50% 100%;
+  animation: ed-bubble-in var(--ed-dur-snappy) var(--ed-snappy) both;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .tb-row,
+  .tb-link-form {
+    background: var(--bg-elevated);
+  }
 }
 
 .tb-btn {
   display: inline-grid;
   place-items: center;
-  min-width: 30px;
-  height: 30px;
-  border-radius: 6px;
+  min-width: 32px;
+  height: 32px;
+  border-radius: var(--radius-pill, 999px);
   color: var(--text-secondary);
+  --press-scale: 0.9;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    var(--press-transition);
 }
 
-.tb-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text);
+@media (hover: hover) {
+  .tb-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+  }
+}
+
+.tb-btn:active {
+  transition-duration: 0.15s, 0.15s, 80ms;
 }
 
 .tb-btn.is-active {
-  color: var(--accent);
-  background: var(--accent-soft);
+  color: var(--text);
+  background: var(--bg-active);
+}
+
+.tb-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 1px;
 }
 
 .tb-text {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 0 8px;
+  padding: 0 10px;
   font-size: 13.5px;
-  font-weight: 500;
+  font-weight: 550;
   color: var(--text);
   white-space: nowrap;
 }
 
+/* The block-type pill: what this line is, and the way to change it. */
+.tb-block {
+  padding: 0 8px 0 12px;
+  background: var(--bg-hover);
+}
+
+.tb-block.is-open {
+  background: var(--bg-active);
+}
+
+/* A flip on a tiny glyph: snappy, so it doesn't swing past and back. */
+.tb-chevron {
+  color: var(--text-secondary);
+  transition: transform var(--ed-dur-snappy) var(--ed-snappy);
+}
+
+.tb-block.is-open .tb-chevron {
+  transform: rotate(180deg);
+}
+
+.tb-ai,
+.tb-ai:hover {
+  gap: 5px;
+  margin-left: 2px;
+  color: var(--accent);
+}
+
+.tb-ai.is-active {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
 .tb-sep {
+  flex: none;
   width: 1px;
   height: 18px;
   background: var(--border-strong);
   margin: 0 4px;
 }
 
-.tb-turn {
-  position: relative;
+/* The selection pill is never wider than the screen. On a phone the block pill and
+   AI stay put and the formatting buttons scroll sideways inside it (like the phone
+   toolbar's strip) instead of running off the edge where they can't be tapped. */
+.tb-main {
+  max-width: calc(100vw - 16px);
+}
+
+/* Only the formatting strip gives up room; the block pill and AI keep their size. */
+.tb-main > .tb-block,
+.tb-main > .tb-ai {
+  flex: none;
+}
+
+.tb-scroll {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  /* Room for the focus ring, which a scrolling box would otherwise cut off. */
+  margin: -3px 0;
+  padding: 3px 0;
+}
+
+.tb-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.tb-scroll > * {
+  flex: none;
+}
+
+@media (max-width: 760px) {
+  /* Fade the edges so it's clear there's more to scroll to. */
+  .tb-scroll {
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6px, #000 calc(100% - 14px), transparent);
+    mask-image: linear-gradient(90deg, transparent 0, #000 6px, #000 calc(100% - 14px), transparent);
+  }
+}
+
+/* Menus hang under the pill, outside the glass. */
+.tb-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+}
+
+.tb-pop > .popover {
+  position: static;
+  transform-origin: top left;
+  animation: ed-drop-in var(--ed-dur-snappy) var(--ed-snappy) both;
 }
 
 .turn-into-menu {
@@ -770,15 +1011,23 @@
   overflow-y: auto;
 }
 
+.shape-menu {
+  width: 280px;
+  max-width: calc(100vw - 16px);
+  max-height: 360px;
+  overflow-y: auto;
+}
+
 .tb-link-form input {
   width: 260px;
   max-width: 60vw;
-  height: 30px;
+  height: 32px;
   border: 0;
   outline: none;
-  padding: 0 8px;
+  padding: 0 10px 0 12px;
   background: transparent;
   font-size: 14px;
+  color: var(--text);
 }
 
 .tb-href {
@@ -786,8 +1035,8 @@
   align-items: center;
   gap: 4px;
   max-width: 260px;
-  padding: 0 8px;
-  height: 30px;
+  padding: 0 8px 0 12px;
+  height: 32px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -821,13 +1070,12 @@
 .slash-icon {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   flex: none;
-  border-radius: 6px;
-  background: var(--bg);
-  box-shadow: inset 0 0 0 1px var(--border-strong);
-  color: var(--text-secondary);
+  border-radius: 9px;
+  background: var(--bg-input);
+  color: var(--text);
 }
 
 .slash-text {
@@ -879,7 +1127,7 @@
 
 /* ------------------------------------------------------------ emoji picker */
 
-.page-icon-row .emoji-picker {
+.note-title-row .emoji-picker {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
@@ -957,61 +1205,303 @@
 
 /* ---------------------------------------------------------- mobile toolbar */
 
+/* A floating Liquid Glass pill docked above the keyboard (or the Home
+   indicator), with a soft glow bleeding out from behind it. */
 .mobile-toolbar {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  /* The page's 16px gutter, like the tab bar, so it lines up with the text. */
+  left: calc(16px + var(--safe-left));
+  right: calc(16px + var(--safe-right));
+  bottom: calc(12px + var(--safe-bottom));
   z-index: 35;
+  pointer-events: none;
+}
+
+.mobile-toolbar > :not(.mt-glow) {
+  pointer-events: auto;
+}
+
+.mt-glow {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -18px;
+  height: 80px;
+  z-index: -1;
+  background:
+    radial-gradient(50% 60% at 30% 60%, var(--glow-a, rgba(64, 128, 255, 0.2)), transparent 70%),
+    radial-gradient(45% 55% at 72% 50%, var(--glow-b, rgba(90, 210, 150, 0.16)), transparent 70%);
+  filter: blur(18px);
+}
+
+.mt-bar {
+  position: relative;
   display: flex;
   align-items: center;
-  height: 46px;
-  background: var(--bg-elevated);
-  border-top: 1px solid var(--border-strong);
-  padding: 0 var(--safe-right) 0 var(--safe-left);
-  will-change: transform;
+  height: 52px;
+  padding: 0 4px;
+  border-radius: var(--radius-pill, 999px);
+  /* Surface, blur, rim and highlight come from the shared .glass class. */
+  animation: ed-bar-in var(--ed-dur-bouncy) var(--ed-bouncy) both;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .mt-bar {
+    background: var(--bg-elevated);
+  }
+}
+
+.mt-block {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  max-width: 136px;
+  padding: 0 10px 0 14px;
+  margin-left: 2px;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--bg-hover);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  --press-scale: 0.94;
+  transition:
+    background-color 0.15s ease,
+    var(--press-transition);
+}
+
+.mt-block:active {
+  transition-duration: 0.15s, 80ms;
+}
+
+.mt-block.is-open {
+  background: var(--bg-active);
+}
+
+.mt-block-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mt-chevron {
+  flex: none;
+  color: var(--text-secondary);
+  transition: transform var(--ed-dur-snappy) var(--ed-snappy);
+}
+
+.mt-block.is-open .mt-chevron {
+  transform: rotate(180deg);
+}
+
+.mt-sep {
+  flex: none;
+  width: 1px;
+  height: 22px;
+  margin: 0 3px;
+  background: var(--border-strong);
 }
 
 .mt-scroll {
   flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 2px;
   overflow-x: auto;
-  padding: 0 6px;
+  overscroll-behavior-x: contain;
   scrollbar-width: none;
+  /* Fade the edges so it's clear there's more to scroll to. */
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6px, #000 calc(100% - 14px), transparent);
+  mask-image: linear-gradient(90deg, transparent 0, #000 6px, #000 calc(100% - 14px), transparent);
 }
 
 .mt-scroll::-webkit-scrollbar {
   display: none;
 }
 
+.mt-scroll .mt-sep {
+  height: 18px;
+  margin: 0 2px;
+}
+
 .mt-btn {
   flex: none;
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 38px;
-  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  /* Round, like the block pill and the bar around it. */
+  border-radius: var(--radius-pill, 999px);
   color: var(--text-secondary);
+  --press-scale: 0.86;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease,
+    var(--press-transition);
 }
 
 .mt-btn.is-active {
-  color: var(--accent);
-  background: var(--accent-soft);
+  color: var(--text);
+  background: var(--bg-active);
 }
 
 .mt-btn:active {
   background: var(--bg-hover);
+  transition-duration: 0.15s, 0.15s, 0.15s, 80ms;
+}
+
+.mt-btn:disabled {
+  opacity: 0.3;
+}
+
+.mt-btn:focus-visible,
+.mt-block:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: -2px;
 }
 
 .mt-done {
-  border-left: 1px solid var(--border);
-  border-radius: 0;
-  width: 50px;
-  height: 100%;
+  width: 44px;
+  border-radius: var(--radius-pill, 999px);
+}
+
+/* Turn into / AI open upwards, above the bar. */
+.mt-panel {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  max-width: 100%;
+}
+
+.mt-panel > .popover {
+  position: static;
+  width: 260px;
+  max-width: 100%;
+  max-height: var(--mt-room, 320px);
+  overflow-y: auto;
+  transform-origin: bottom left;
+  animation: ed-rise-in var(--ed-dur-snappy) var(--ed-snappy) both;
+}
+
+.mt-panel .ai-menu-scroll {
+  max-height: none;
+  overflow: visible;
+}
+
+.mt-link {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-left: 12px;
+  animation: ed-fade-in 0.2s ease both;
+}
+
+.mt-link-icon {
+  flex: none;
+  color: var(--text-secondary);
+}
+
+/* 16px so iOS doesn't zoom in when it gets focus. */
+.mt-link input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  padding: 0 8px;
+  font-size: 16px;
+  color: var(--text);
 }
 
 .has-mobile-toolbar .page-tail {
   min-height: 50vh;
+}
+
+/* ---------------------------------------------------------- editor motion */
+
+@keyframes ed-bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.92);
+  }
+}
+
+@keyframes ed-drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+}
+
+@keyframes ed-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+}
+
+@keyframes ed-bar-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.94);
+  }
+}
+
+@keyframes ed-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes ed-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes ed-pill-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@keyframes ed-ai-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes ed-ai-fresh {
+  from {
+    background-color: color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+@keyframes ed-ai-breathe {
+  50% {
+    transform: scale(0.7);
+    opacity: 0.6;
+  }
+}
+
+/* The global reduced-motion rule shortens everything; endless loops just stop. */
+@media (prefers-reduced-motion: reduce) {
+  .prose .ai-pending,
+  .ai-pill-dot {
+    animation: none;
+  }
 }

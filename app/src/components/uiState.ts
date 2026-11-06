@@ -13,6 +13,8 @@ export interface CalendarPrefill {
 interface UIState {
   palette: null | 'search' | 'commands'
   settings: boolean
+  /** Which Settings tab to open on (read once when Settings opens). */
+  settingsTab?: string
   drawer: boolean // mobile sidebar
   calendar: null | CalendarPrefill
   history: null | string // path whose version history is open

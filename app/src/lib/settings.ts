@@ -8,8 +8,13 @@ export type Palette = 'default' | 'paper' | 'slate' | 'forest' | 'rose' | 'oled'
 export type PageWidth = 'narrow' | 'normal' | 'wide' | 'full'
 export type Density = 'compact' | 'normal' | 'airy'
 
+/** The default accent; dark mode shows a lighter mix of it (see accentFor). */
+export const DEFAULT_ACCENT = '#2f6bff'
+/** The default before Slate 3. Saved settings still on it move to the new one. */
+const OLD_DEFAULT_ACCENT = '#2383e2'
+
 export const ACCENTS: { id: string; label: string; color: string }[] = [
-  { id: 'blue', label: 'Blue', color: '#2383e2' },
+  { id: 'blue', label: 'Blue', color: DEFAULT_ACCENT },
   { id: 'purple', label: 'Purple', color: '#8b5cf6' },
   { id: 'pink', label: 'Pink', color: '#e255a1' },
   { id: 'red', label: 'Red', color: '#e03e3e' },
@@ -65,7 +70,7 @@ export interface Settings {
 const DEFAULTS: Settings = {
   theme: 'system',
   palette: 'default',
-  accent: '#2383e2',
+  accent: DEFAULT_ACCENT,
   font: 'sans',
   fontSize: 16,
   density: 'normal',
@@ -107,6 +112,9 @@ function load(): Settings {
       // Carry the old on/off switches over to their newer settings once.
       if (saved.pageWidth === undefined && saved.fullWidth) merged.pageWidth = 'full'
       if (saved.fontSize === undefined && saved.smallText) merged.fontSize = 14
+      // The old default blue is no longer offered, so anyone still on it simply
+      // had the default: give them the new one.
+      if (typeof merged.accent !== 'string' || merged.accent.toLowerCase() === OLD_DEFAULT_ACCENT) merged.accent = DEFAULT_ACCENT
       return merged
     }
   } catch {
@@ -116,6 +124,13 @@ function load(): Settings {
 }
 
 export const useSettings = create<Settings>(() => load())
+
+/** The accent as drawn: lifted toward white in dark mode so it stays bright on graphite. */
+export function accentFor(accent: string, theme: 'light' | 'dark'): string {
+  if (theme === 'light') return accent
+  if (accent.toLowerCase() === DEFAULT_ACCENT) return '#4d86ff'
+  return `color-mix(in srgb, ${accent} 84%, white)`
+}
 
 useSettings.subscribe((s) => {
   try {

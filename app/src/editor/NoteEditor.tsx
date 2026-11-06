@@ -16,6 +16,7 @@ import { markdownToDoc } from '../lib/markdown/parse'
 import { docToMarkdown } from '../lib/markdown/serialize'
 import { BlockHandle } from './BlockHandle'
 import { PasteOptions } from './ShapeMenu'
+import { AiWriting, pendingRun, stopRun } from './extensions/aiWriting'
 import { Callout } from './extensions/callout'
 import { CodeBlock } from './extensions/codeBlock'
 import { HeadingFold, loadFolds, saveFolds } from './extensions/headingFold'
@@ -42,6 +43,8 @@ export interface NoteEditorProps {
   /** Where this note's folded headings are remembered (its path). */
   foldKey?: string
   onTimeClick?: (info: TimeClick) => void
+  /** Offer the ✨ AI actions on selected text (left out on encrypted pages). */
+  ai?: { attachPath?: string }
 }
 
 const looksLikeMarkdown = (t: string) =>
@@ -77,6 +80,7 @@ function buildExtensions(p: { current: NoteEditorProps }) {
     }),
     WikiLinkSuggest.configure({ items: (q) => p.current.linkItems(q) }),
     SlashCommand,
+    AiWriting,
     CurrentPlaceholder.configure({
       placeholder: (node, $pos) => {
         if (node.type.name === 'heading') return `Heading ${node.attrs.level}`
@@ -122,6 +126,22 @@ async function insertImages(view: EditorView, files: File[], at?: number) {
 }
 
 // Never let a weird file crash the editor: fall back to raw source.
+// How much room the editor keeps around the caret when it scrolls it into view.
+// On phones the top bar floats over the page and the format toolbar over its
+// foot, so the caret stays clear of both; read at scroll time, since the bar's
+// height includes the notch. Getters, because ProseMirror reads each side then.
+const caretMargin = {
+  get top() {
+    const bar = document.querySelector<HTMLElement>('.topbar')
+    return bar && getComputedStyle(bar).position === 'absolute' ? bar.getBoundingClientRect().bottom + 12 : 5
+  },
+  get bottom() {
+    return document.querySelector('.mobile-toolbar') ? 80 : 5
+  },
+  left: 5,
+  right: 5,
+}
+
 function safeDoc(markdown: string, schema: ReturnType<typeof getSchema>): JSONContent {
   const doc = markdownToDoc(markdown)
   try {
@@ -159,6 +179,7 @@ export function NoteEditor(props: NoteEditorProps) {
     content: safeDoc(props.markdown, schema),
     editorProps: {
       attributes: { class: 'prose', spellcheck: String(props.spellcheck ?? true), autocapitalize: 'sentences' },
+      scrollMargin: caretMargin,
       handlePaste: (view, event) => {
         const text = event.clipboardData?.getData('text/plain')
         const html = event.clipboardData?.getData('text/html')
@@ -256,6 +277,13 @@ export function NoteEditor(props: NoteEditorProps) {
     }
     lastMd.current = remote
     if (!pending || next !== local) {
+      // Swapping the whole page loses where the AI's text was (its answer would land
+      // at the bottom of the page), so stop it and say why.
+      const run = pendingRun(editor)
+      if (run) {
+        stopRun(editor.view, run.id)
+        toast('This page changed on another device, so the AI stopped. Try again.')
+      }
       const node = editor.schema.nodeFromJSON(safeDoc(next, editor.schema))
       const { from, to } = editor.state.selection
       const tr = editor.state.tr.replaceWith(0, editor.state.doc.content.size, node.content)
@@ -292,7 +320,7 @@ export function NoteEditor(props: NoteEditorProps) {
   return (
     <div className="editor-wrap">
       {!props.touch && <BlockHandle editor={editor} />}
-      <SelectionToolbar editor={editor} onLinkPage={(text) => props.onLinkPage(text, editor)} />
+      <SelectionToolbar editor={editor} onLinkPage={(text) => props.onLinkPage(text, editor)} ai={props.ai} />
       <PasteOptions editor={editor} />
       <LinkToolbar editor={editor} />
       <TableToolbar editor={editor} />

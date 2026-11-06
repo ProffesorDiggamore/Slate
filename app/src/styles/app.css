@@ -14,13 +14,12 @@
   animation: fade-in 0.4s ease;
 }
 
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
+.splash .logo {
+  animation: pop-in var(--dur-bouncy) var(--spring-bouncy) both;
 }
 
 .main {
+  position: relative;
   flex: 1;
   min-width: 0;
   display: flex;
@@ -28,7 +27,15 @@
   background: var(--bg);
 }
 
+/* Its own stacking context, so a page's ambient glow (z-index -1) sits behind
+   the page but above the window colour, and its own View Transition group, so
+   route changes animate just the page. z-index 3 keeps the editor's popovers
+   above the top bar, as before. */
 .main-scroll {
+  position: relative;
+  z-index: 3;
+  isolation: isolate;
+  view-transition-name: slate-page;
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
@@ -40,6 +47,43 @@
   overflow: hidden;
 }
 
+/* Room under the last thing on the page for the floating tab bar. Padding
+   inside the page (not a spacer after it) so short pages don't scroll. */
+.app.has-tabbar .main-scroll > .page {
+  padding-bottom: calc(var(--tabbar-h) + 28px + var(--safe-bottom));
+}
+
+/* Plain cards: white with a hairline, or (is-filled) a light grey fill. */
+.soft-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+}
+
+.soft-card.is-filled {
+  background: var(--card-fill);
+  border-color: transparent;
+}
+
+/* Phones skip the route View Transition (router.ts), so each page rises in as
+   it mounts (App keys pages by route). On .page-inner, not .page: the note's
+   format toolbar is fixed inside .page, and a fading ancestor would cut its
+   glass off from the page. Home brings its own staggered entrance. */
+@media (max-width: 760px) {
+  .main-scroll > .page:not(.home) > .page-inner {
+    /* backwards, not both: a finished animation that keeps holding
+       translate: 0 still makes .page-inner the containing block for the
+       phone's fixed format toolbar, which then sits in the wrong place. */
+    animation: page-rise 0.42s var(--spring-smooth) backwards;
+  }
+}
+
+/* Lists and cards rise in one after another; set style={{ '--i': index }}. */
+.stagger-item {
+  animation: fade-up var(--dur-snappy) var(--spring-snappy) both;
+  animation-delay: calc(min(var(--i, 0), 14) * 40ms);
+}
+
 /* ----------------------------------------------------------------- sidebar */
 
 .sidebar {
@@ -49,7 +93,7 @@
   flex-direction: column;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border);
-  color: var(--text-secondary);
+  color: var(--text);
   padding-top: var(--safe-top);
   padding-left: var(--safe-left);
   user-select: none;
@@ -59,9 +103,9 @@
 .sidebar-head {
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 8px 8px 4px 8px;
-  min-height: 46px;
+  gap: 4px;
+  padding: 10px 10px 6px 10px;
+  min-height: 50px;
 }
 
 .workspace {
@@ -70,12 +114,16 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  height: 32px;
-  padding: 0 6px;
+  height: 36px;
+  padding: 0 8px;
   border-radius: var(--radius);
   color: var(--text);
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: 15.5px;
+  letter-spacing: -0.02em;
+  transition:
+    background 0.15s,
+    var(--press-transition);
 }
 
 .workspace:hover {
@@ -91,9 +139,17 @@
   border-radius: 6px;
 }
 
+.sidebar-head .sync-indicator {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+
 .sidebar-collapse {
   opacity: 0;
-  transition: opacity 0.15s;
+  transition:
+    opacity 0.15s,
+    var(--press-transition);
 }
 
 .sidebar:hover .sidebar-collapse,
@@ -102,7 +158,10 @@
 }
 
 .sidebar-nav {
-  padding: 2px 8px 6px;
+  padding: 4px 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .nav-item {
@@ -110,22 +169,29 @@
   align-items: center;
   gap: 10px;
   width: 100%;
-  height: 30px;
-  padding: 0 8px;
+  height: 34px;
+  padding: 0 10px;
   border-radius: var(--radius);
   font-size: 14px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--text);
   text-align: left;
+  transition:
+    background 0.15s,
+    box-shadow 0.2s,
+    var(--press-transition);
 }
 
 .nav-item:hover {
   background: var(--bg-hover);
 }
 
+/* The current place: a soft raised pill. */
 .nav-item.is-active {
-  background: var(--bg-active);
+  background: var(--nav-active-bg);
+  box-shadow: var(--nav-active-shadow);
   color: var(--text);
+  font-weight: 600;
 }
 
 .nav-icon {
@@ -133,6 +199,7 @@
   place-items: center;
   width: 20px;
   flex: none;
+  color: var(--accent);
 }
 
 .nav-label {
@@ -146,21 +213,22 @@
 .sidebar-scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 0 8px 12px;
+  padding: 0 10px 12px;
 }
 
 .sidebar-section + .sidebar-section {
-  margin-top: 14px;
+  margin-top: 16px;
 }
 
 .section-head {
   display: flex;
   align-items: center;
-  height: 28px;
-  padding: 0 4px 0 8px;
+  height: 30px;
+  padding: 0 4px 0 10px;
   font-size: 12px;
   font-weight: 600;
   color: var(--text-faint);
+  letter-spacing: 0.01em;
 }
 
 .section-head > span:first-child {
@@ -180,7 +248,7 @@
 }
 
 .sidebar-foot {
-  padding: 6px 8px calc(8px + var(--safe-bottom));
+  padding: 8px 10px calc(10px + var(--safe-bottom));
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -192,16 +260,22 @@
   align-items: center;
   gap: 10px;
   height: 34px;
-  padding: 0 8px;
+  padding: 0 10px;
   border-radius: var(--radius);
   font-weight: 500;
   font-size: 14px;
-  color: var(--text-secondary);
+  color: var(--text);
+  transition:
+    background 0.15s,
+    var(--press-transition);
+}
+
+.new-page-btn svg {
+  color: var(--accent);
 }
 
 .new-page-btn:hover {
   background: var(--bg-hover);
-  color: var(--text);
 }
 
 .sidebar-resize {
@@ -225,12 +299,16 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 30px;
+  height: 32px;
   padding-right: 4px;
   border-radius: var(--radius);
   font-size: 14px;
-  color: var(--text-secondary);
+  color: var(--text);
   cursor: pointer;
+  transition:
+    background 0.15s,
+    box-shadow 0.2s,
+    var(--press-transition);
 }
 
 .tree-row:hover {
@@ -238,14 +316,15 @@
 }
 
 .tree-row.is-active {
-  background: var(--bg-active);
+  background: var(--nav-active-bg);
+  box-shadow: var(--nav-active-shadow);
   color: var(--text);
   font-weight: 500;
 }
 
 .tree-row.is-drop {
   background: var(--accent-soft);
-  box-shadow: inset 0 0 0 1px var(--accent);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
 }
 
 .tree-icon {
@@ -259,7 +338,7 @@
 }
 
 .tree-chevron {
-  transition: transform 0.12s ease;
+  transition: transform 0.45s var(--spring-snappy);
   margin-left: -4px;
 }
 
@@ -286,6 +365,7 @@
   display: flex;
   gap: 1px;
   opacity: 0;
+  transition: opacity 0.15s;
 }
 
 .tree-row:hover .tree-actions,
@@ -307,19 +387,20 @@
 .tree-rename {
   flex: 1;
   min-width: 0;
-  height: 24px;
-  padding: 0 6px;
+  height: 26px;
+  padding: 0 7px;
   border: 1px solid var(--accent);
-  border-radius: 4px;
+  border-radius: 7px;
   background: var(--bg);
   outline: none;
   font-size: 14px;
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .tree-empty {
   font-size: 13px;
   color: var(--text-faint);
-  padding: 4px 8px;
+  padding: 4px 10px;
   height: 28px;
   display: flex;
   align-items: center;
@@ -337,20 +418,47 @@
 .drawer-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.28);
   opacity: 0;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.4s var(--ease-out);
 }
 
+/* Slides in on the smooth spring as a glass panel with rounded outer corners,
+   the same readable glass as the sheets. Hidden (not just off-screen) when
+   closed so its shadow never peeks in. The backdrop is a sibling, so its fade
+   never cuts the panel's blur off from the page. */
 .drawer .sidebar {
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
-  width: min(86vw, 330px);
-  transform: translateX(-102%);
-  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
-  box-shadow: var(--shadow-pop);
+  width: min(84vw, 320px);
+  border-right: 0;
+  border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
+  background: var(--sheet-bg);
+  -webkit-backdrop-filter: var(--sheet-blur);
+  backdrop-filter: var(--sheet-blur);
+  translate: -106% 0;
+  visibility: hidden;
+  transition:
+    translate var(--dur-smooth) var(--spring-smooth),
+    visibility 0s linear var(--dur-smooth);
+  box-shadow:
+    inset -1px 0 0 var(--glass-border),
+    inset 0 1px 0 var(--glass-highlight),
+    0 0 0 0.5px var(--glass-rim),
+    var(--shadow-pop);
+}
+
+/* The spring overshoots a few pixels; this strip keeps the left edge covered. */
+.drawer .sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 100%;
+  width: 40px;
+  background: inherit;
 }
 
 .drawer.is-open {
@@ -362,14 +470,28 @@
 }
 
 .drawer.is-open .sidebar {
-  transform: none;
+  translate: 0 0;
+  visibility: visible;
+  transition:
+    translate var(--dur-smooth) var(--spring-smooth),
+    visibility 0s;
 }
 
 .is-mobile .nav-item,
 .is-mobile .tree-row,
 .is-mobile .new-page-btn {
-  height: 40px;
-  font-size: 15px;
+  height: 44px;
+  font-size: 17px;
+  border-radius: 12px;
+}
+
+.is-mobile .workspace {
+  font-size: 17px;
+}
+
+.is-mobile .section-head {
+  font-size: 13px;
+  height: 34px;
 }
 
 /* ------------------------------------------------------------------ topbar */
@@ -378,12 +500,42 @@
   flex: none;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   height: calc(var(--topbar-h) + var(--safe-top));
-  padding: var(--safe-top) calc(12px + var(--safe-right)) 0 calc(12px + var(--safe-left));
+  padding: var(--safe-top) calc(14px + var(--safe-right)) 0 calc(14px + var(--safe-left));
   background: var(--bg);
   position: relative;
   z-index: 2;
+  transition: box-shadow 0.25s;
+}
+
+/* A hairline appears once the page scrolls under the bar. Inset, inside the
+   bar's own box: the page scroller is a z-index 3 layer above the bar, so a
+   line hanging below the bar would be painted over by whatever scrolls past. */
+.topbar.is-scrolled {
+  box-shadow: inset 0 -1px 0 var(--border);
+}
+
+.topbar-lead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-lead:empty {
+  display: none;
+}
+
+/* Phones on Home: the page's own brand row is the header, so the bar is just
+   the status-bar strip. */
+.topbar.is-bare {
+  height: var(--safe-top);
+  min-height: 0;
+  padding-top: 0;
+}
+
+.topbar.is-bare > * {
+  display: none;
 }
 
 .crumbs {
@@ -393,8 +545,12 @@
   align-items: center;
   gap: 2px;
   font-size: 14px;
+  font-weight: 500;
   overflow: hidden;
   white-space: nowrap;
+  transition:
+    opacity 0.25s var(--ease-out),
+    translate 0.45s var(--spring-snappy);
 }
 
 .crumb {
@@ -429,7 +585,25 @@
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 8px;
+}
+
+/* A sync problem, shown on a phone note's ••• button (TopBar). */
+.circle-btn[data-sync]::before {
+  content: '';
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+  background: var(--text-faint);
+  animation: pop-in var(--dur-bouncy) var(--spring-bouncy) both;
+}
+
+.circle-btn[data-sync='error']::before {
+  background: var(--danger);
 }
 
 .icon-btn {
@@ -440,31 +614,40 @@
   border-radius: var(--radius);
   color: var(--text-secondary);
   flex: none;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    var(--press-transition);
 }
 
-.icon-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text);
+@media (hover: hover) {
+  .icon-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+  }
 }
 
 .icon-btn-sm {
   width: 24px;
   height: 24px;
-  border-radius: 4px;
+  border-radius: 7px;
 }
 
-.icon-btn.is-fav {
-  color: #e0a100;
+.icon-btn.is-fav,
+.circle-btn.is-fav {
+  color: #ff9f0a;
 }
 
 .is-mobile .icon-btn {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
 }
 
 .is-mobile .icon-btn-sm {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
 }
 
 .sync-indicator {
@@ -477,6 +660,10 @@
   font-size: 13px;
   color: var(--text-faint);
   white-space: nowrap;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    var(--press-transition);
 }
 
 .sync-indicator.is-compact {
@@ -485,9 +672,11 @@
   justify-content: center;
 }
 
-.sync-indicator:hover {
-  background: var(--bg-hover);
-  color: var(--text-secondary);
+@media (hover: hover) {
+  .sync-indicator:hover {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+  }
 }
 
 .sync-indicator.tone-error {
@@ -496,6 +685,42 @@
 
 .sync-indicator.tone-busy {
   color: var(--text-secondary);
+}
+
+/* In the top bar it matches the circle buttons beside it: a small piece of
+   glass, a pill (or a circle when compact). */
+.topbar .sync-indicator {
+  position: relative;
+  height: 34px;
+  padding: 0 12px 0 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow:
+    0 0 0 0.5px var(--glass-rim),
+    inset 0 1px 0 var(--glass-highlight),
+    var(--glass-depth),
+    0 4px 14px rgba(0, 0, 0, 0.08);
+  color: var(--text-secondary);
+}
+
+.topbar .sync-indicator.is-compact {
+  width: 34px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+@media (hover: hover) {
+  .topbar .sync-indicator:hover {
+    background: color-mix(in srgb, var(--glass-bg) 88%, var(--text) 6%);
+  }
+}
+
+.topbar .sync-indicator.tone-error {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 30%, transparent);
 }
 
 /* ------------------------------------------------------------------- pages */
@@ -509,6 +734,17 @@
   max-width: calc(720px + 2 * 96px);
   margin: 0 auto;
   padding: 0 calc(96px + var(--safe-right)) 0 calc(96px + var(--safe-left));
+}
+
+/* iPad portrait, split view, narrow windows: 96px gutters beside a sidebar
+   would leave a column narrower than a phone's. A media query, not a container
+   query: containment on the scroller would trap the fixed toolbar and popovers. */
+@media (min-width: 761px) and (max-width: 1180px) {
+  .page-inner {
+    max-width: calc(720px + 2 * 40px);
+    padding-left: calc(40px + var(--safe-left));
+    padding-right: calc(40px + var(--safe-right));
+  }
 }
 
 .page.is-full .page-inner {
@@ -556,6 +792,17 @@
   margin-left: 10px;
 }
 
+/* Quiet grey buttons; the page title is the star. */
+.page-controls .btn-ghost {
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+.page-controls .btn-ghost:hover {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+
 .page-title {
   display: block;
   width: 100%;
@@ -567,7 +814,7 @@
   font-size: 40px;
   font-weight: 700;
   line-height: 1.2;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.025em;
   padding: 3px 0;
   margin: 0 0 8px;
   color: var(--text);
@@ -597,9 +844,22 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 32px;
+  font-size: 34px;
   font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
   padding: 56px 0 8px;
+}
+
+.page-heading > svg {
+  flex: none;
+  color: var(--text-faint);
+}
+
+.page-lede {
+  font-size: 15px;
+  line-height: 1.55;
+  max-width: 560px;
 }
 
 .backlinks {
@@ -625,10 +885,15 @@
   text-align: left;
   padding: 8px 10px;
   border-radius: var(--radius);
+  transition:
+    background 0.15s,
+    var(--press-transition);
 }
 
-.backlink:hover {
-  background: var(--bg-hover);
+@media (hover: hover) {
+  .backlink:hover {
+    background: var(--bg-hover);
+  }
 }
 
 .backlink-title {
@@ -672,11 +937,13 @@
   gap: 10px;
   padding: 18vh 24px 24px;
   color: var(--text-secondary);
+  animation: fade-up var(--dur-smooth) var(--spring-smooth) both;
 }
 
 .empty-state h2 {
   color: var(--text);
   font-size: 20px;
+  letter-spacing: -0.015em;
 }
 
 .empty-inline {
@@ -686,6 +953,32 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 12px;
+}
+
+/* A friendly centred empty card (Tasks, Trash). */
+.empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 36px 24px;
+  text-align: center;
+  color: var(--text-secondary);
+  border-radius: var(--radius-card);
+  background: var(--card-fill);
+  animation: fade-up var(--dur-smooth) var(--spring-smooth) both;
+}
+
+.empty-card > svg {
+  color: var(--accent);
+  animation: pop-in var(--dur-bouncy) var(--spring-bouncy) 0.1s both;
+}
+
+.empty-card strong {
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 650;
 }
 
 .row-gap {
@@ -710,76 +1003,25 @@
 /* -------------------------------------------------------------------- home */
 
 .home .page-inner {
+  max-width: calc(640px + 2 * 96px);
   padding-bottom: 80px;
 }
 
-.home-date {
-  padding-top: 64px;
-  color: var(--text-faint);
-  font-size: 14px;
-  font-weight: 500;
+.home-head {
+  padding: 56px 4px 20px;
 }
 
 .home-greeting {
-  font-size: 32px;
+  font-size: 34px;
   font-weight: 700;
-  letter-spacing: -0.015em;
-  margin: 2px 0 24px;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
 }
 
-.quick-actions {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.quick {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 14px;
-  border-radius: var(--radius-lg);
-  background: var(--bg-subtle);
-  box-shadow: var(--shadow-card);
-  font-weight: 500;
-  color: var(--text);
-  text-align: left;
-  transition: background 0.12s;
-}
-
-.quick svg {
+.home-date {
+  margin-top: 4px;
   color: var(--text-secondary);
-}
-
-.quick:hover {
-  background: var(--bg-hover);
-}
-
-.callout-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  width: 100%;
-  text-align: left;
-  padding: 12px 14px;
-  margin-bottom: 10px;
-  border-radius: var(--radius-lg);
-  background: var(--c-blue);
-  color: var(--text);
-  font-size: 14px;
-  line-height: 1.45;
-}
-
-.callout-card svg {
-  flex: none;
-  margin-top: 1px;
-  color: var(--accent);
-}
-
-.callout-card:hover {
-  filter: brightness(0.98);
+  font-size: 15px;
 }
 
 .home-section {
@@ -789,96 +1031,217 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
-  margin: 30px 0 10px;
+  margin: 28px 0 8px;
 }
 
-.cards {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 156px;
-  gap: 12px;
-  overflow-x: auto;
-  padding: 2px 2px 10px;
-  margin: 0 -2px;
-  scroll-snap-type: x proximity;
+/* ------------------------------------------------------------ grouped lists */
+
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 26px 6px 8px;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.005em;
+  color: var(--text-secondary);
 }
 
-.card {
+.group-head .link-btn {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* A soft filled card of rows with hairlines between them. */
+.group {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  height: 156px;
-  padding: 14px;
-  border-radius: var(--radius-lg);
-  background: var(--bg);
-  box-shadow: var(--shadow-card), 0 0 0 1px var(--border);
-  text-align: left;
-  scroll-snap-align: start;
+  border-radius: var(--radius-card);
+  background: var(--card-fill);
   overflow: hidden;
-  transition: background 0.12s;
 }
 
-.card:hover {
-  background: var(--bg-hover);
+.group-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 6px 16px;
+  text-align: left;
+  color: var(--text);
+  font-size: 15px;
+  transition:
+    background 0.15s,
+    var(--press-transition);
 }
 
-.card-icon {
-  font-size: 24px;
+.group-row.is-tall {
+  min-height: 60px;
+}
+
+@media (hover: hover) {
+  .group-row:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.group-row:active {
+  background: var(--bg-active);
+}
+
+/* Hairline between rows, starting after the icon like iOS. */
+.group > * + *::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 56px;
+  height: 1px;
+  background: var(--border);
+  transform: scaleY(0.6);
+}
+
+.group > * {
+  position: relative;
+}
+
+.group-tile {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  color: #fff;
+}
+
+.tile-blue {
+  background: var(--accent);
+}
+.tile-red {
+  background: #ff3b30;
+}
+.tile-orange {
+  background: #ff9500;
+}
+.tile-green {
+  background: #34c759;
+}
+.tile-purple {
+  background: #af52de;
+}
+.tile-gray {
+  background: #8e8e93;
+}
+
+.group-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  font-size: 20px;
   line-height: 1;
   color: var(--text-faint);
-  height: 26px;
 }
 
-.card-title {
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 1.3;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.card-preview {
+.group-text {
   flex: 1;
-  font-size: 12px;
-  color: var(--text-secondary);
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
-.card-meta {
-  font-size: 11.5px;
+.group-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-text .group-title {
+  flex: none;
+}
+
+.group-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-value,
+.group-meta {
+  flex: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.group-meta {
+  font-size: 13px;
+  color: var(--text-faint);
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.group-chevron {
+  flex: none;
+  margin-left: -4px;
   color: var(--text-faint);
 }
 
+.link-text {
+  color: var(--accent);
+}
+
+.group-foot {
+  margin: 10px 16px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* A white card of rows (Trash). */
 .list {
   display: flex;
   flex-direction: column;
-  margin-bottom: 16px;
+  margin: 18px 0 16px;
+  padding: 4px;
+  border-radius: var(--radius-card);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
 }
 
 .list-row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 36px;
-  padding: 4px 8px;
-  border-radius: var(--radius);
+  min-height: 48px;
+  padding: 6px 10px;
+  border-radius: 14px;
   text-align: left;
   width: 100%;
+  transition: background 0.15s;
 }
 
 .list-row:not(.is-static):hover {
   background: var(--bg-hover);
 }
 
-.list-row + .list-row {
-  border-top: 1px solid var(--border);
+.list-row + .list-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 40px;
+  right: 10px;
+  height: 1px;
+  background: var(--border);
 }
 
 .list-icon {
@@ -925,6 +1288,7 @@
   position: absolute;
   inset: 0;
   cursor: grab;
+  animation: fade-in 0.6s var(--ease-out) both;
 }
 
 .graph-controls {
@@ -933,13 +1297,12 @@
   right: calc(12px + var(--safe-right));
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  border-radius: var(--radius-lg);
-  background: var(--bg-elevated);
-  box-shadow: var(--shadow-pop);
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--radius-card);
   font-size: 13px;
-  min-width: 190px;
+  min-width: 200px;
+  animation: drop-in var(--dur-snappy) var(--spring-snappy) 0.1s both;
 }
 
 .graph-stat {
@@ -982,25 +1345,32 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
-  height: 34px;
-  padding: 0 14px;
-  border-radius: var(--radius);
+  height: 36px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
   font-weight: 500;
   font-size: 14px;
   color: var(--text);
-  background: var(--bg);
-  box-shadow: inset 0 0 0 1px var(--border-strong);
+  background: var(--bg-input);
   white-space: nowrap;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    box-shadow 0.15s,
+    var(--press-transition);
 }
 
 .btn:hover:not(:disabled) {
-  background: var(--bg-hover);
+  background: var(--bg-active);
 }
 
 .btn-primary {
   background: var(--accent);
   color: var(--accent-text);
-  box-shadow: none;
+  font-weight: 600;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -1008,21 +1378,19 @@
 }
 
 .btn-ghost {
-  box-shadow: none;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--accent);
 }
 
 .btn-sm {
-  height: 28px;
-  padding: 0 10px;
+  height: 30px;
+  padding: 0 12px;
   font-size: 13px;
 }
 
 .btn-danger {
   color: var(--danger);
-  box-shadow: inset 0 0 0 1px var(--danger);
-  background: transparent;
+  background: var(--danger-soft);
 }
 
 .btn-danger:hover {
@@ -1032,11 +1400,23 @@
 .link-btn {
   display: inline-flex;
   align-items: center;
+  align-self: flex-start;
   gap: 4px;
   color: var(--accent);
   font-size: 13.5px;
   font-weight: 500;
   padding: 4px 0;
+  text-align: left;
+}
+
+.link-btn:hover {
+  opacity: 0.8;
+}
+
+.link-btn > svg:first-child {
+  flex: none;
+  align-self: flex-start;
+  margin-top: 0.2em;
 }
 
 .rot90 {
@@ -1045,46 +1425,57 @@
 
 .input {
   width: 100%;
-  height: 36px;
-  padding: 0 10px;
-  border-radius: var(--radius);
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
   border: 0;
   outline: none;
   background: var(--bg-input);
-  box-shadow: inset 0 0 0 1px var(--border-strong);
   font-size: 15px;
+  transition:
+    box-shadow 0.15s,
+    background 0.15s;
+}
+
+.input::placeholder {
+  color: var(--text-faint);
 }
 
 .input:focus {
+  background: var(--card-bg);
   box-shadow:
-    inset 0 0 0 1px var(--accent),
-    0 0 0 3px var(--accent-soft);
+    0 0 0 1px var(--accent),
+    0 0 0 4px var(--accent-soft);
 }
 
 /* ----------------------------------------------------------- menus/popover */
 
+/* Every floating menu (context menus, the editor's slash / block / turn-into
+   menus, the emoji picker) is frosted glass that springs open. The rim is drawn
+   with shadows rather than .glass::before because some of these scroll. */
 .popover {
-  background: var(--bg-elevated);
+  background: var(--glass-bg-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  backdrop-filter: var(--glass-blur-strong);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-pop);
+  box-shadow:
+    0 0 0 0.5px var(--glass-rim),
+    inset 0 1px 0 var(--glass-highlight),
+    var(--glass-depth),
+    var(--shadow-pop);
   padding: 6px;
   color: var(--text);
   font-size: 14px;
   z-index: 60;
+  transform-origin: var(--origin, top left);
+  animation: pop-in var(--dur-snappy) var(--spring-snappy) both;
 }
 
 .context-menu {
   position: fixed;
   min-width: 220px;
   max-width: calc(100vw - 16px);
-  animation: pop-in 0.12s ease;
-}
-
-@keyframes pop-in {
-  from {
-    opacity: 0;
-    transform: translateY(-2px) scale(0.985);
-  }
 }
 
 .menu-label {
@@ -1099,17 +1490,20 @@
   align-items: center;
   gap: 10px;
   width: 100%;
-  min-height: 32px;
+  min-height: 34px;
   padding: 4px 10px;
-  border-radius: var(--radius);
+  border-radius: 10px;
   text-align: left;
   color: var(--text);
   white-space: nowrap;
+  transition:
+    background 0.12s,
+    var(--press-transition);
 }
 
 .menu-item:hover,
 .menu-item.is-active {
-  background: var(--bg-hover);
+  background: var(--bg-active);
 }
 
 .menu-item.is-danger {
@@ -1131,8 +1525,13 @@
   width: 18px;
 }
 
+/* Labels can carry a page title ("Attach “…”"); past the menu's width they
+   end in an ellipsis instead of running out of the menu. */
 .menu-text {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .menu-hint {
@@ -1152,7 +1551,7 @@
 .menu-sep {
   height: 1px;
   background: var(--border);
-  margin: 5px 4px;
+  margin: 5px 6px;
 }
 
 .menu-empty {
@@ -1162,12 +1561,16 @@
 }
 
 .is-mobile .menu-item {
-  min-height: 42px;
-  font-size: 15px;
+  min-height: 44px;
+  font-size: 17px;
+  border-radius: 12px;
 }
 
 /* ------------------------------------------------------------------ modals */
 
+/* Sheets and the palette are Liquid Glass you can read: --sheet-bg is mostly
+   opaque and --sheet-blur heavy, so the page behind shows only as a soft tint
+   (base.css). The page itself also softens and dims behind them. */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1176,37 +1579,82 @@
   align-items: flex-start;
   justify-content: center;
   padding: 10vh 16px 16px;
-  background: rgba(15, 15, 15, 0.42);
-  animation: fade-in 0.15s ease;
+}
+
+/* The dim and blur live on ::before, a sibling of the sheet, not on the
+   backdrop itself: a blurred or fading ancestor would cut the sheet's own
+   glass off from the page (it could only see inside that ancestor). */
+.modal-backdrop::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.22);
+  -webkit-backdrop-filter: blur(6px) saturate(120%);
+  backdrop-filter: blur(6px) saturate(120%);
+  animation: fade-in 0.3s var(--ease-out) both;
 }
 
 .modal {
+  position: relative;
   width: min(560px, 100%);
   max-height: 80dvh;
   display: flex;
   flex-direction: column;
-  background: var(--bg-elevated);
-  border-radius: 12px;
-  box-shadow: var(--shadow-pop);
+  background: var(--sheet-bg);
+  -webkit-backdrop-filter: var(--sheet-blur);
+  backdrop-filter: var(--sheet-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    0 0 0 0.5px var(--glass-rim),
+    inset 0 1px 0 var(--glass-highlight),
+    var(--glass-depth),
+    var(--shadow-pop);
   overflow: hidden;
-  animation: pop-in 0.16s ease;
+  animation: pop-in var(--dur-snappy) var(--spring-snappy) both;
+}
+
+/* Closing (Escape, the ×, a tap outside, a swipe down): a quick fade first. */
+.modal-backdrop.is-closing::before {
+  animation: fade-out-quick 0.22s ease-out both;
+}
+
+.modal-backdrop.is-closing .modal {
+  animation: modal-out 0.2s ease-in both;
+}
+
+@keyframes modal-out {
+  to {
+    opacity: 0;
+    scale: 0.96;
+  }
 }
 
 .modal-wide {
   width: min(880px, 100%);
 }
 
+.sheet-grabber {
+  display: none;
+}
+
 .modal-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 14px 10px 20px;
+  gap: 12px;
+  padding: 14px 14px 12px 22px;
   border-bottom: 1px solid var(--border);
 }
 
 .modal-head h2 {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .picker {
@@ -1232,9 +1680,9 @@
 
 .settings-tabs {
   flex: none;
-  width: 190px;
-  padding: 12px 8px;
-  background: var(--bg-sidebar);
+  width: 200px;
+  padding: 14px 10px;
+  background: color-mix(in srgb, var(--bg-sidebar) 55%, transparent);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -1244,22 +1692,59 @@
 .settings-tabs.is-row {
   width: auto;
   flex-direction: row;
+  gap: 8px;
   overflow-x: auto;
   border-right: 0;
   border-bottom: 1px solid var(--border);
-  padding: 8px;
+  background: transparent;
+  padding: 10px 16px 12px;
+  scrollbar-width: none;
+}
+
+.settings-tabs.is-row::-webkit-scrollbar {
+  display: none;
+}
+
+.settings-tabs.is-row .settings-tab {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  border: 1px solid var(--border);
+  font-size: 15px;
+  box-shadow: none;
+}
+
+.settings-tabs.is-row .settings-tab.is-active {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
+}
+
+.settings-tabs.is-row .settings-tab.is-active svg {
+  color: inherit;
 }
 
 .settings-tab {
   display: flex;
   align-items: center;
   gap: 9px;
-  height: 32px;
+  height: 34px;
   padding: 0 10px;
   border-radius: var(--radius);
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--text);
   white-space: nowrap;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    box-shadow 0.2s,
+    var(--press-transition);
+}
+
+.settings-tab svg {
+  flex: none;
+  color: var(--accent);
 }
 
 .settings-tab:hover {
@@ -1267,16 +1752,23 @@
 }
 
 .settings-tab.is-active {
-  background: var(--bg-active);
+  background: var(--nav-active-bg);
+  box-shadow: var(--nav-active-shadow);
   color: var(--text);
+  font-weight: 600;
 }
 
 .settings-panel {
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  padding: 22px 28px 32px;
+  padding: 26px 30px 34px;
   font-size: 14px;
+}
+
+/* Each tab's content rises in when you switch to it. */
+.settings-panel > section {
+  animation: fade-up var(--dur-snappy) var(--spring-snappy) both;
 }
 
 .settings-panel section > * + * {
@@ -1284,15 +1776,17 @@
 }
 
 .settings-panel h3 {
-  font-size: 18px;
-  font-weight: 650;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
 }
 
 .settings-note {
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-radius: var(--radius-lg);
-  background: var(--bg-subtle);
-  line-height: 1.7;
+  background: var(--card-fill);
+  line-height: 1.6;
+  color: var(--text-secondary);
 }
 
 .field {
@@ -1311,9 +1805,9 @@
 
 .help-steps {
   margin: 0;
-  padding: 12px 14px 12px 34px;
+  padding: 14px 16px 14px 36px;
   border-radius: var(--radius-lg);
-  background: var(--bg-subtle);
+  background: var(--card-fill);
   line-height: 1.6;
   display: flex;
   flex-direction: column;
@@ -1331,10 +1825,11 @@
   gap: 8px;
   align-items: flex-start;
   padding: 10px 12px;
-  border-radius: var(--radius);
+  border-radius: 12px;
   background: var(--danger-soft);
   color: var(--danger);
   font-size: 13.5px;
+  animation: fade-up var(--dur-snappy) var(--spring-snappy) both;
 }
 
 .form-error svg {
@@ -1344,7 +1839,7 @@
 
 .sync-card {
   border-radius: var(--radius-lg);
-  box-shadow: inset 0 0 0 1px var(--border-strong);
+  background: var(--card-fill);
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
@@ -1376,7 +1871,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  min-height: 40px;
+  min-height: 42px;
 }
 
 .toggle-row {
@@ -1394,17 +1889,18 @@
   font-size: 12.5px;
 }
 
+/* iOS-style switch: the knob springs across and stretches while pressed. */
 .switch {
   appearance: none;
   -webkit-appearance: none;
   flex: none;
-  width: 34px;
-  height: 20px;
+  width: 46px;
+  height: 28px;
   border-radius: 999px;
-  background: var(--border-strong);
+  background: var(--bg-active);
   position: relative;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.25s var(--ease-out);
   margin: 0;
 }
 
@@ -1413,42 +1909,68 @@
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
   background: #fff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  transition: transform 0.15s;
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.18),
+    0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  transition:
+    translate var(--dur-bouncy) var(--spring-bouncy),
+    width 0.3s var(--spring-snappy);
+}
+
+.switch:active::after {
+  width: 30px;
 }
 
 .switch:checked {
-  background: var(--accent);
+  background: var(--ok);
 }
 
 .switch:checked::after {
-  transform: translateX(14px);
+  translate: 18px 0;
+}
+
+.switch:checked:active::after {
+  translate: 12px 0;
 }
 
 .segmented {
   display: inline-flex;
-  padding: 2px;
-  border-radius: 8px;
-  background: var(--bg-hover);
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--bg-input);
 }
 
 .segmented button {
-  height: 28px;
+  height: 30px;
   padding: 0 12px;
-  border-radius: 6px;
+  border-radius: 9px;
   font-weight: 500;
   font-size: 13px;
-  color: var(--text-secondary);
+  color: var(--text);
+  transition:
+    background 0.2s,
+    box-shadow 0.2s,
+    var(--press-transition);
 }
 
 .segmented button.is-active {
-  background: var(--bg-elevated);
+  background: var(--nav-active-bg);
   color: var(--text);
-  box-shadow: var(--shadow-card);
+  font-weight: 600;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  animation: seg-pop var(--dur-bouncy) var(--spring-bouncy);
+}
+
+@keyframes seg-pop {
+  from {
+    scale: 0.92;
+  }
 }
 
 .font-picker {
@@ -1461,11 +1983,15 @@
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  width: 70px;
-  padding: 8px 0 6px;
-  border-radius: var(--radius);
+  width: 72px;
+  padding: 10px 0 8px;
+  border-radius: 14px;
   font-size: 12px;
   color: var(--text-secondary);
+  transition:
+    background 0.15s,
+    box-shadow 0.2s,
+    var(--press-transition);
 }
 
 .font-option:hover {
@@ -1474,7 +2000,7 @@
 
 .font-option.is-active {
   color: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent);
 }
 
 .font-sample {
@@ -1498,8 +2024,7 @@
   gap: 16px;
   padding: 14px 16px;
   border-radius: var(--radius-lg);
-  box-shadow: inset 0 0 0 1px var(--danger-soft);
-  background: var(--danger-soft);
+  background: var(--card-fill);
 }
 
 .install-steps ol {
@@ -1519,29 +2044,39 @@
 }
 
 .palette {
+  position: relative;
   width: min(640px, 100%);
   max-height: 72dvh;
   display: flex;
   flex-direction: column;
-  background: var(--bg-elevated);
-  border-radius: 12px;
-  box-shadow: var(--shadow-pop);
+  background: var(--sheet-bg);
+  -webkit-backdrop-filter: var(--sheet-blur);
+  backdrop-filter: var(--sheet-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    0 0 0 0.5px var(--glass-rim),
+    inset 0 1px 0 var(--glass-highlight),
+    var(--glass-depth),
+    var(--shadow-pop);
   overflow: hidden;
-  animation: pop-in 0.14s ease;
+  transform-origin: top center;
+  animation: drop-in var(--dur-snappy) var(--spring-snappy) both;
 }
 
 .palette-input {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 16px;
-  height: 54px;
+  padding: 0 18px;
+  height: 56px;
   border-bottom: 1px solid var(--border);
   color: var(--text-faint);
 }
 
 .palette-input input {
   flex: 1;
+  min-width: 0;
   border: 0;
   outline: none;
   background: transparent;
@@ -1570,15 +2105,16 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 38px;
+  min-height: 40px;
   padding: 6px 10px;
-  border-radius: var(--radius);
+  border-radius: 12px;
   cursor: pointer;
   font-size: 14px;
+  transition: background 0.12s;
 }
 
 .palette-item[data-selected='true'] {
-  background: var(--bg-hover);
+  background: var(--bg-active);
 }
 
 .palette-icon {
@@ -1621,13 +2157,13 @@
 .palette-snippet mark {
   background: var(--mark-bg);
   color: inherit;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
 .palette-foot {
   display: flex;
   gap: 16px;
-  padding: 8px 16px;
+  padding: 9px 18px;
   border-top: 1px solid var(--border);
   font-size: 12px;
   color: var(--text-faint);
@@ -1642,45 +2178,125 @@
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 8px;
   z-index: 70;
   width: max-content;
   max-width: calc(100vw - 24px);
+  transition: bottom var(--dur-smooth) var(--spring-smooth);
 }
 
-.has-mobile-toolbar .toasts {
+/* Above the floating tab bar when there is one. */
+.app.has-tabbar .toasts {
+  bottom: calc(var(--tabbar-h) + 26px + var(--safe-bottom));
+}
+
+/* Under the top bar while something else owns the bottom of the screen: the
+   format toolbar when editing on a phone, the assistant's message box. */
+.has-mobile-toolbar .toasts,
+.has-mobile-toolbar .app.has-tabbar .toasts,
+.app.is-ai .toasts {
   bottom: auto;
   top: calc(56px + var(--safe-top));
 }
 
+/* Small glass capsules that spring up into place. */
 .toast {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 10px 10px 16px;
-  border-radius: 10px;
-  background: #2f2f2f;
-  color: #fff;
+  gap: 10px;
+  min-height: 46px;
+  padding: 6px 8px 6px 18px;
+  border-radius: var(--radius-pill);
+  background: var(--glass-bg-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  backdrop-filter: var(--glass-blur-strong);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    0 0 0 0.5px var(--glass-rim),
+    inset 0 1px 0 var(--glass-highlight),
+    var(--glass-depth),
+    var(--glass-shadow);
+  color: var(--text);
   font-size: 14px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-  animation: pop-in 0.2s ease;
+  font-weight: 500;
+  transform-origin: bottom center;
+  animation: toast-in var(--dur-snappy) var(--spring-snappy) both;
+}
+
+/* Hung from the top: they drop down out of the top bar instead of rising into it. */
+.has-mobile-toolbar .toast,
+.app.is-ai .toast {
+  transform-origin: top center;
+  animation-name: toast-drop;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    translate: 0 16px;
+    scale: 0.9;
+  }
+}
+
+@keyframes toast-drop {
+  from {
+    opacity: 0;
+    translate: 0 -16px;
+    scale: 0.9;
+  }
 }
 
 .toast.is-error {
-  background: #8a2b26;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 8%, var(--glass-bg-strong));
 }
 
 .toast-action {
   font-weight: 600;
-  color: #7cc0ff;
-  padding: 2px 4px;
+  color: var(--accent);
+  height: 32px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  transition:
+    background 0.15s,
+    var(--press-transition);
+}
+
+@media (hover: hover) {
+  .toast-action:hover {
+    background: var(--bg-hover);
+  }
 }
 
 .toast-close {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-faint);
   display: grid;
   place-items: center;
-  padding: 4px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  transition:
+    background 0.15s,
+    var(--press-transition);
+}
+
+@media (hover: hover) {
+  .toast-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+  }
+}
+
+@media (pointer: coarse) {
+  .toast-action {
+    height: 40px;
+  }
+
+  .toast-close {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 /* --------------------------------------------------------- install banner */
@@ -1694,11 +2310,19 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  padding: 14px 10px 14px 16px;
-  border-radius: 14px;
-  background: var(--bg-elevated);
-  box-shadow: var(--shadow-pop);
+  padding: 16px 10px 16px 18px;
+  border-radius: var(--radius-xl);
   font-size: 14px;
+  animation: fade-up var(--dur-smooth) var(--spring-smooth) 0.4s both;
+}
+
+.app.has-tabbar .install-banner {
+  bottom: calc(var(--tabbar-h) + 24px + var(--safe-bottom));
+}
+
+/* While editing on a phone the format toolbar owns the bottom of the screen. */
+.has-mobile-toolbar .install-banner {
+  display: none;
 }
 
 .install-banner > div {
@@ -1712,13 +2336,19 @@
 /* -------------------------------------------------------------- onboarding */
 
 .onboarding {
+  position: relative;
+  isolation: isolate;
   min-height: 100dvh;
   overflow-y: auto;
   height: 100dvh;
   display: flex;
   justify-content: center;
-  padding: calc(10vh + var(--safe-top)) 20px 40px;
-  background: var(--bg-sidebar);
+  padding: calc(10vh + var(--safe-top)) 20px calc(40px + var(--safe-bottom));
+  background: var(--bg);
+}
+
+.onboarding .ambient-glow {
+  height: 320px;
 }
 
 .onboarding-card {
@@ -1730,11 +2360,21 @@
   gap: 12px;
 }
 
+.onboarding-card > * {
+  animation: fade-up var(--dur-smooth) var(--spring-smooth) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+.onboarding-card > .logo {
+  animation: pop-in var(--dur-bouncy) var(--spring-bouncy) both;
+}
+
 .onboarding-card h1 {
-  font-size: 30px;
+  font-size: 34px;
   font-weight: 700;
-  letter-spacing: -0.015em;
-  margin-top: 8px;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  margin-top: 10px;
 }
 
 .onboarding-card > p {
@@ -1746,8 +2386,8 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 16px;
+  gap: 12px;
+  margin-top: 18px;
 }
 
 .option {
@@ -1755,28 +2395,41 @@
   align-items: center;
   gap: 14px;
   width: 100%;
-  padding: 16px;
-  border-radius: 12px;
-  background: var(--bg);
-  box-shadow: var(--shadow-card), 0 0 0 1px var(--border);
+  padding: 16px 18px 16px 16px;
+  border-radius: var(--radius-card);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow-card);
   text-align: left;
   transition:
-    box-shadow 0.15s,
-    transform 0.15s;
+    box-shadow 0.25s,
+    translate 0.45s var(--spring-snappy),
+    var(--press-transition);
 }
 
 .option:hover {
-  box-shadow: var(--shadow-pop);
+  translate: 0 -2px;
+  box-shadow: var(--shadow-soft);
 }
 
+/* The leading icon sits in a soft accent tile. */
 .option > svg:first-child {
   color: var(--accent);
   flex: none;
+  box-sizing: content-box;
+  padding: 11px;
+  border-radius: 14px;
+  background: var(--accent-soft);
 }
 
 .option > svg:last-child {
   color: var(--text-faint);
   flex: none;
+  transition: translate 0.45s var(--spring-bouncy);
+}
+
+.option:hover > svg:last-child {
+  translate: 3px 0;
 }
 
 .option span {
@@ -1787,7 +2440,8 @@
 }
 
 .option strong {
-  font-size: 15px;
+  font-size: 15.5px;
+  letter-spacing: -0.01em;
 }
 
 .option .muted {
@@ -1797,18 +2451,172 @@
 .onboarding-form {
   width: 100%;
   text-align: left;
-  background: var(--bg);
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: var(--shadow-card), 0 0 0 1px var(--border);
-  margin-top: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 22px;
+  margin-top: 14px;
+}
+
+/* ------------------------------------------------------- floating tab bar */
+
+/* Phones: a Liquid Glass capsule floating above the Home indicator. The wrapper
+   holds the soft glow behind it; the capsule itself is the glass. */
+.tabbar-wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  isolation: isolate;
+  display: flex;
+  justify-content: center;
+  padding: 0 calc(16px + var(--safe-right)) calc(12px + var(--safe-bottom)) calc(16px + var(--safe-left));
+  pointer-events: none;
+  transition: translate var(--dur-smooth) var(--spring-smooth);
+}
+
+.tabbar-wrap.is-hidden {
+  translate: 0 calc(100% + 16px);
+  transition: translate 0.32s cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* The fade is on the children, not the wrapper: a fading ancestor would cut
+   the bar's blur off from the page until the fade ended, then pop to frosted. */
+.tabbar-wrap > .tabbar,
+.tabbar-wrap > .ambient-glow-bottom {
+  transition: opacity 0.3s var(--ease-out);
+}
+
+.tabbar-wrap.is-hidden > * {
+  opacity: 0;
+  transition-duration: 0.25s;
+  transition-timing-function: ease-in;
+}
+
+.tabbar-wrap .ambient-glow-bottom {
+  height: 150px;
+  opacity: 0.85;
+}
+
+.tabbar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  width: min(100%, 420px);
+  height: var(--tabbar-h);
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+}
+
+.tab-item {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+  height: calc(var(--tabbar-h) - 12px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  transition:
+    color 0.25s,
+    var(--press-transition);
+}
+
+.tab-item > svg {
+  transition: scale var(--dur-snappy) var(--spring-snappy);
+}
+
+.tab-item.is-active {
+  color: var(--text);
+}
+
+.tab-item.is-active > svg {
+  scale: 1.08;
+}
+
+.tab-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The Ask AI orb in the middle: bigger, no label. */
+.tab-orb {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 54px;
+  border-radius: var(--radius-pill);
+  --press-scale: 0.9;
+}
+
+.tab-orb .orb {
+  transition: scale var(--dur-bouncy) var(--spring-bouncy);
+}
+
+@media (hover: hover) {
+  .tab-orb:hover .orb {
+    scale: 1.05;
+  }
+}
+
+/* The soft glass blob behind the active tab. Only the slide is bouncy; the
+   squish as it sets off and the icon's lift are snappy, so a tap shows one
+   bounce rather than several overlapping. */
+.tabbar-indicator {
+  position: absolute;
+  z-index: 0;
+  top: 6px;
+  left: 0;
+  height: calc(100% - 12px);
+  border-radius: var(--radius-pill);
+  pointer-events: none;
+  transition:
+    translate var(--dur-bouncy) var(--spring-bouncy),
+    width var(--dur-bouncy) var(--spring-bouncy),
+    opacity 0.25s;
+}
+
+.tabbar-indicator.is-none {
+  opacity: 0;
+}
+
+.tabbar-indicator > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--glass-fill);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    inset 0 0 0 0.5px var(--glass-rim);
+  animation: blob-squish var(--dur-snappy) var(--spring-snappy);
+}
+
+@keyframes blob-squish {
+  from {
+    scale: 1.06 0.94;
+  }
 }
 
 /* ------------------------------------------------------------------ mobile */
 
 @media (max-width: 760px) {
   .page-inner {
-    padding: 0 calc(20px + var(--safe-right)) 0 calc(20px + var(--safe-left));
+    padding: 0 calc(16px + var(--safe-right)) 0 calc(16px + var(--safe-left));
   }
 
   .page-icon-row {
@@ -1821,27 +2629,165 @@
   }
 
   .page-icon {
-    font-size: 56px;
+    font-size: 48px;
   }
 
   .page-controls {
     opacity: 1;
   }
 
+  .page-icon + .page-controls {
+    margin-left: 4px;
+  }
+
   .page-title {
     font-size: 30px;
   }
 
-  .home-date {
-    padding-top: 20px;
+  .page-heading {
+    font-size: 32px;
+    padding: 14px 0 6px;
+  }
+
+  .home-head {
+    padding: 18px 4px 16px;
   }
 
   .home-greeting {
-    font-size: 26px;
+    font-size: 30px;
   }
 
-  .quick-actions {
-    grid-template-columns: repeat(3, 1fr);
+  .group-row {
+    font-size: 17px;
+    min-height: 50px;
+  }
+
+  .group-row.is-tall {
+    min-height: 60px;
+  }
+
+  .group-sub {
+    font-size: 14px;
+  }
+
+  /* Phone top bar, the iOS way: glass circle buttons float over the page,
+     which scrolls under them. The bar itself is see-through and only its
+     buttons take taps; pages start below it (padding) so nothing hides at rest. */
+  .topbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 4;
+    display: grid;
+    grid-template-columns: 1fr minmax(0, max-content) 1fr;
+    gap: 8px;
+    padding: var(--safe-top) calc(12px + var(--safe-right)) 0 calc(12px + var(--safe-left));
+    background: transparent;
+    pointer-events: none;
+  }
+
+  .topbar button {
+    pointer-events: auto;
+  }
+
+  .topbar.is-scrolled {
+    box-shadow: none;
+  }
+
+  /* The scroll edge: a soft fade of the page colour with a light blur behind
+     the buttons, so whatever passes under them stays legible. Over a plain
+     page at rest it matches the page and can't be seen. */
+  .topbar::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 -20px;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(
+      var(--bg) 0,
+      color-mix(in srgb, var(--bg) 95%, transparent) calc(var(--safe-top) + 8px),
+      color-mix(in srgb, var(--bg) 88%, transparent) 78%,
+      transparent
+    );
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-mask-image: linear-gradient(#000 78%, transparent);
+    mask-image: linear-gradient(#000 78%, transparent);
+  }
+
+  /* Home's bar is just the status-bar strip over its glow: no backing at rest
+     (the glow runs up under the clock), a frosted fade once the page scrolls. */
+  .topbar.is-bare::before {
+    inset: 0 0 -16px;
+    background: linear-gradient(color-mix(in srgb, var(--bg) 72%, transparent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s var(--ease-out);
+  }
+
+  .topbar.is-bare.is-scrolled::before {
+    opacity: 1;
+  }
+
+  .main-scroll {
+    scroll-padding-top: calc(var(--topbar-h) + var(--safe-top));
+  }
+
+  .main-scroll > .page {
+    padding-top: calc(var(--topbar-h) + var(--safe-top));
+  }
+
+  /* Home draws its own header and keeps the status bar clear itself (home.css). */
+  .main-scroll > .page.home {
+    padding-top: 0;
+  }
+
+  /* Equal sides (two circles and a gap) keep the title truly centred. */
+  .topbar-lead,
+  .topbar-lead:empty {
+    display: flex;
+    justify-self: start;
+    min-width: 88px;
+  }
+
+  .topbar-actions {
+    min-width: 88px;
+    justify-content: flex-end;
+  }
+
+  .topbar .crumbs {
+    justify-self: center;
+    justify-content: center;
+    max-width: 100%;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+
+  .topbar .crumb {
+    padding: 0;
+  }
+
+  .topbar .crumb-current > svg,
+  .topbar .crumb-icon {
+    display: none;
+  }
+
+  .topbar-actions {
+    justify-self: end;
+  }
+
+  /* On pages with their own big heading the small title waits until the
+     heading scrolls away, like an iOS large title. */
+  .topbar.title-reveal:not(.is-scrolled) .crumbs {
+    opacity: 0;
+    translate: 0 6px;
+  }
+
+  .topbar .sync-indicator,
+  .topbar .sync-indicator.is-compact {
+    width: 40px;
+    height: 40px;
   }
 
   .modal-backdrop {
@@ -1849,12 +2795,54 @@
     padding: 0;
   }
 
+  /* Bottom sheets: rounded top, a grabber, and the smooth spring up from below.
+     The sheet runs 48px past the bottom of the screen, so a rubber-band drag
+     upward (or the spring's tiny overshoot) shows more glass, never a gap. */
   .modal,
   .modal-wide {
     width: 100%;
-    max-height: calc(92dvh - var(--safe-top));
-    border-radius: 14px 14px 0 0;
-    padding-bottom: var(--safe-bottom);
+    max-height: calc(94dvh - var(--safe-top) + 48px);
+    margin-bottom: -48px;
+    border-radius: 28px 28px 0 0;
+    border-bottom: 0;
+    padding-bottom: calc(48px + var(--safe-bottom));
+    box-shadow:
+      0 0 0 0.5px var(--glass-rim),
+      inset 0 1px 0 var(--glass-highlight),
+      0 -8px 40px rgba(0, 0, 0, 0.14);
+    animation: sheet-up var(--dur-smooth) var(--spring-smooth) both;
+  }
+
+  .modal-backdrop.is-closing .modal {
+    animation: sheet-down 0.28s cubic-bezier(0.4, 0, 1, 1) both;
+  }
+
+  .sheet-grabber {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 22px;
+    z-index: 2;
+    touch-action: none;
+  }
+
+  .sheet-grabber::before {
+    content: '';
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    width: 38px;
+    height: 5px;
+    margin-left: -19px;
+    border-radius: 3px;
+    background: var(--border-strong);
+  }
+
+  .modal-head {
+    padding-top: 22px;
+    touch-action: none;
   }
 
   .settings-body {
@@ -1872,6 +2860,7 @@
 
   .palette {
     max-height: calc(100dvh - 24px - var(--safe-top));
+    border-radius: 24px;
   }
 
   .palette-foot {
@@ -1888,6 +2877,10 @@
     align-items: center;
   }
 
+  .app.has-tabbar .graph-controls {
+    bottom: calc(var(--tabbar-h) + 24px + var(--safe-bottom));
+  }
+
   .danger-zone {
     flex-direction: column;
     align-items: flex-start;
@@ -1895,5 +2888,24 @@
 
   .crumb-folder {
     display: none;
+  }
+}
+
+@keyframes sheet-down {
+  to {
+    translate: 0 100%;
+  }
+}
+
+/* iOS zooms the whole app into any field under 16px when it gets focus, and
+   stays zoomed after the keyboard closes. Touch screens get 16px fields; the
+   .app prefix outranks features.css's `font: inherit` rules. */
+@media (hover: none) and (pointer: coarse) {
+  .app .input,
+  .app .prop-input,
+  .app .table-search input,
+  .app textarea.input,
+  .app select.input {
+    font-size: 16px;
   }
 }

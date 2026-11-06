@@ -1,5 +1,7 @@
-import { CalendarClock, Check, ChevronRight, CloudCog, Download, ExternalLink, Info, LayoutTemplate, LoaderCircle, Palette, RefreshCw, Smartphone, TriangleAlert, Database } from 'lucide-react'
-import { useState } from 'react'
+import { CalendarClock, Check, ChevronRight, CloudCog, Download, ExternalLink, Info, LayoutTemplate, LoaderCircle, Palette, RefreshCw, Smartphone, Sparkles, TriangleAlert, Database } from 'lucide-react'
+import { useLayoutEffect, useState } from 'react'
+import { clearAiSecrets } from '../lib/ai/store'
+import { ConsentHost } from '../lib/ai/ui/ConsentHost'
 import { clearAll } from '../lib/db'
 import { revokeGoogle } from '../lib/google/auth'
 import { relativeTime, useIsMobile } from '../lib/hooks'
@@ -9,96 +11,125 @@ import { runSync, testConnection } from '../lib/sync/manager'
 import { toast } from '../lib/toasts'
 import { EMPTY_META } from '../lib/types'
 import { applyFiles, setMeta, useVault } from '../lib/vault'
+import { AiSettings } from './AiSettings'
 import { EncryptionSettings } from './EncryptionSettings'
 import { GoogleCalendarSettings } from './GoogleCalendarSettings'
 import { InstallSteps } from './InstallHint'
+import { isNativeApp, PRIVACY_URL } from '../lib/native'
 import { TemplateSettings } from './TemplateSettings'
-import { Modal } from './ui'
+import { Modal, mod } from './ui'
 import { useUI } from './uiState'
 
-type Tab = 'sync' | 'appearance' | 'calendar' | 'templates' | 'install' | 'data' | 'about'
+type Tab = 'sync' | 'appearance' | 'calendar' | 'ai' | 'templates' | 'install' | 'data' | 'about'
+const TABS: Tab[] = ['sync', 'appearance', 'calendar', 'ai', 'templates', 'install', 'data', 'about']
 
 export function SettingsModal() {
   const open = useUI((s) => s.settings)
   const [tab, setTab] = useState<Tab>('sync')
+  const wanted = useUI((s) => s.settingsTab)
   const mobile = useIsMobile()
-  if (!open) return null
+  // Someone asked for a particular tab (e.g. "Set up AI"): switch to it once, then forget it,
+  // so reopening Settings later lands where the user left off. Before paint, so no flash.
+  useLayoutEffect(() => {
+    if (!open || !wanted) return
+    if ((TABS as string[]).includes(wanted)) setTab(wanted as Tab)
+    useUI.setState({ settingsTab: undefined })
+  }, [open, wanted])
+  // The AI consent prompt lives here because this component is always mounted;
+  // it has to work from the editor's AI menu too, not only the assistant page.
+  if (!open) return <ConsentHost />
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'sync', label: 'Sync', icon: <CloudCog size={16} /> },
     { id: 'appearance', label: 'Appearance', icon: <Palette size={16} /> },
     { id: 'calendar', label: 'Calendar & time', icon: <CalendarClock size={16} /> },
+    { id: 'ai', label: 'AI', icon: <Sparkles size={16} /> },
     { id: 'templates', label: 'Templates', icon: <LayoutTemplate size={16} /> },
-    { id: 'install', label: 'Install app', icon: <Smartphone size={16} /> },
+    // The App Store app is already installed.
+    ...(isNativeApp ? [] : [{ id: 'install' as const, label: 'Install app', icon: <Smartphone size={16} /> }]),
     { id: 'data', label: 'Data', icon: <Database size={16} /> },
     { id: 'about', label: 'About', icon: <Info size={16} /> },
   ]
   return (
-    <Modal title="Settings" onClose={() => useUI.setState({ settings: false })} wide className="settings">
-      <div className="settings-body">
-        <nav className={'settings-tabs' + (mobile ? ' is-row' : '')}>
-          {tabs.map((t) => (
-            <button key={t.id} type="button" className={'settings-tab' + (tab === t.id ? ' is-active' : '')} onClick={() => setTab(t.id)}>
-              {t.icon}
-              {t.label}
-            </button>
-          ))}
-        </nav>
-        <div className="settings-panel">
-          {tab === 'sync' && <SyncSettings />}
-          {tab === 'appearance' && <AppearanceSettings />}
-          {tab === 'calendar' && <CalendarSettings />}
-          {tab === 'templates' && <TemplateSettings />}
-          {tab === 'install' && (
-            <section>
-              <h3>Install Slate as an app</h3>
-              <p className="muted">
-                Slate is a web app you can install for free. Once installed it gets its own icon and window, opens instantly and works offline.
-                Changes sync whenever you’re online.
-              </p>
-              <InstallSteps />
-              <div className="settings-note">
-                <strong>On your iPhone:</strong> open this same link in Safari and use <em>Share → Add to Home Screen</em>.
-                <br />
-                <strong>On your Mac:</strong> open it in Safari and use <em>File → Add to Dock…</em>
-              </div>
-              <div className="settings-note">
-                <strong>Dock icon stuck on a white square?</strong> Safari bakes web-app icons onto a tile, which stands out in a dark, clear
-                or tinted Dock. On macOS 26 or later, double-click <code>mac/apply-dock-icon.command</code> from{' '}
-                <a href="https://github.com/ProffesorDiggamore/Slate/tree/main/mac" target="_blank" rel="noopener noreferrer">
-                  Slate’s GitHub repo <ExternalLink size={12} />
-                </a>{' '}
-                to swap in a see-through icon that follows your Dock’s style. On older macOS, download the icon below and choose it in the
-                Slate window under <em>Slate → Settings → General</em> (click the icon).
-                <div className="row-gap" style={{ marginTop: 8 }}>
-                  <a className="btn btn-sm" href="/slate-icon.png" download="Slate icon.png">
-                    <Download size={15} /> Download Dock icon
-                  </a>
+    <>
+      <Modal title="Settings" onClose={() => useUI.setState({ settings: false })} wide className="settings">
+        <div className="settings-body">
+          <nav className={'settings-tabs' + (mobile ? ' is-row' : '')}>
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                className={'settings-tab' + (tab === t.id ? ' is-active' : '')}
+                onClick={() => setTab(t.id)}
+                // On phones the tabs scroll sideways: keep the open one in view (e.g. "AI" when opened from the assistant).
+                ref={tab === t.id && mobile ? (el) => el?.scrollIntoView({ inline: 'center', block: 'nearest' }) : undefined}
+              >
+                {t.icon}
+                {t.label}
+              </button>
+            ))}
+          </nav>
+          <div className="settings-panel">
+            {tab === 'sync' && <SyncSettings />}
+            {tab === 'appearance' && <AppearanceSettings />}
+            {tab === 'calendar' && <CalendarSettings />}
+            {tab === 'ai' && <AiSettings />}
+            {tab === 'templates' && <TemplateSettings />}
+            {tab === 'install' && (
+              <section>
+                <h3>Install Slate as an app</h3>
+                <p className="muted">
+                  Slate is a web app you can install for free. Once installed it gets its own icon and window, opens instantly and works offline.
+                  Changes sync whenever you’re online.
+                </p>
+                <InstallSteps />
+                <div className="settings-note">
+                  <strong>On your iPhone:</strong> open this same link in Safari and use <em>Share → Add to Home Screen</em>.
+                  <br />
+                  <strong>On your Mac:</strong> open it in Safari and use <em>File → Add to Dock…</em>
+                  <br />
+                  <strong>On Windows:</strong> open it in Edge or Chrome and click <em>Install</em> at the right end of the address bar.
                 </div>
-              </div>
-            </section>
-          )}
-          {tab === 'data' && <DataSettings />}
-          {tab === 'about' && (
-            <section>
-              <h3>About Slate</h3>
-              <p>
-                Slate 2.0 — a Notion-style editor on top of plain Markdown files, Obsidian-compatible: <code>[[links]]</code>, backlinks,
-                callouts, tasks and tags all work in both apps.
-              </p>
-              <p className="muted">
-                Your notes live on this device and in your own GitHub repository. Nothing is sent anywhere else —{' '}
-                <a href="/privacy.html" target="_blank" rel="noopener">
-                  privacy details
-                </a>
-                . Keyboard: {` `}
-                <kbd className="kbd">⌘K</kbd> search, <kbd className="kbd">⌘N</kbd> new page, <kbd className="kbd">/</kbd> blocks,{' '}
-                <kbd className="kbd">[[</kbd> link a page, <kbd className="kbd">⌘\</kbd> sidebar.
-              </p>
-            </section>
-          )}
+                <div className="settings-note">
+                  <strong>Dock icon stuck on a white square?</strong> Safari bakes web-app icons onto a tile, which stands out in a dark, clear
+                  or tinted Dock. On macOS 26 or later, double-click <code>mac/apply-dock-icon.command</code> from{' '}
+                  <a href="https://github.com/ProffesorDiggamore/Slate/tree/main/mac" target="_blank" rel="noopener noreferrer">
+                    Slate’s GitHub repo <ExternalLink size={12} />
+                  </a>{' '}
+                  to swap in a see-through icon that follows your Dock’s style. On older macOS, download the icon below and choose it in the
+                  Slate window under <em>Slate → Settings → General</em> (click the icon).
+                  <div className="row-gap" style={{ marginTop: 8 }}>
+                    <a className="btn btn-sm" href="/slate-icon.png" download="Slate icon.png">
+                      <Download size={15} /> Download Dock icon
+                    </a>
+                  </div>
+                </div>
+              </section>
+            )}
+            {tab === 'data' && <DataSettings />}
+            {tab === 'about' && (
+              <section>
+                <h3>About Slate</h3>
+                <p>
+                  Slate 2.0 — a Notion-style editor on top of plain Markdown files, Obsidian-compatible: <code>[[links]]</code>, backlinks,
+                  callouts, tasks and tags all work in both apps.
+                </p>
+                <p className="muted">
+                  Your notes live on this device and in your own GitHub repository. Nothing is sent anywhere else — unless you set up the AI
+                  assistant, which sends only what you ask, straight to the AI provider you picked —{' '}
+                  <a href={PRIVACY_URL} target="_blank" rel="noopener">
+                    privacy details
+                  </a>
+                  . Keyboard: {` `}
+                  <kbd className="kbd">{mod}K</kbd> search, <kbd className="kbd">{mod}N</kbd> new page, <kbd className="kbd">/</kbd> blocks,{' '}
+                  <kbd className="kbd">[[</kbd> link a page, <kbd className="kbd">{mod}\</kbd> sidebar.
+                </p>
+              </section>
+            )}
+          </div>
         </div>
-      </div>
-    </Modal>
+      </Modal>
+      <ConsentHost />
+    </>
   )
 }
 
@@ -118,7 +149,7 @@ export function SyncForm({ onConnected }: { onConnected?: () => void }) {
     setError(null)
     setWarning(null)
     const parsed = parseRepo(repo)
-    if (!parsed) return setError('Enter the repo as owner/name, like your-name/cairn-notes, or paste its GitHub URL.')
+    if (!parsed) return setError('Enter the repo as owner/name, like your-name/slate-notes, or paste its GitHub URL.')
     const tok = token.trim() || current?.token || ''
     if (!tok) return setError('Paste your GitHub token.')
     setBusy(true)
@@ -162,7 +193,7 @@ export function SyncForm({ onConnected }: { onConnected?: () => void }) {
     <form className="sync-form" onSubmit={connect}>
       <label className="field">
         <span>GitHub repository</span>
-        <input className="input" value={repo} onChange={(e) => setRepo(e.target.value)} placeholder="your-name/cairn-notes" autoCapitalize="off" autoCorrect="off" spellCheck={false} />
+        <input className="input" value={repo} onChange={(e) => setRepo(e.target.value)} placeholder="your-name/slate-notes" autoCapitalize="off" autoCorrect="off" spellCheck={false} />
       </label>
       <label className="field">
         <span>
@@ -195,10 +226,10 @@ export function SyncForm({ onConnected }: { onConnected?: () => void }) {
         <ol className="help-steps">
           <li>
             <strong>Make a separate, private repo just for notes.</strong> Open{' '}
-            <a href="https://github.com/new?name=cairn-notes&visibility=private" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/new?name=slate-notes&visibility=private" target="_blank" rel="noopener noreferrer">
               GitHub → New repository <ExternalLink size={12} />
             </a>
-            , name it <strong>cairn-notes</strong>, choose <strong>Private</strong>, and click <strong>Create repository</strong>. Don’t use the
+            , name it <strong>slate-notes</strong>, choose <strong>Private</strong>, and click <strong>Create repository</strong>. Don’t use the
             repo that holds the Slate app — keeping notes on their own means app updates and notes never mix, and nothing private ends up on
             the website.
           </li>
@@ -213,13 +244,13 @@ export function SyncForm({ onConnected }: { onConnected?: () => void }) {
             Name it <strong>Slate</strong> and pick an expiration (when it runs out, just paste a new one here).
           </li>
           <li>
-            Under <strong>Repository access</strong> choose <strong>Only select repositories</strong> and pick <strong>cairn-notes</strong>.
+            Under <strong>Repository access</strong> choose <strong>Only select repositories</strong> and pick <strong>slate-notes</strong>.
           </li>
           <li>
             Under <strong>Permissions → Repository permissions</strong>, set <strong>Contents</strong> to <strong>Read and write</strong>.
           </li>
           <li>
-            Click <strong>Generate token</strong>, copy it, and paste it above with <strong>your-name/cairn-notes</strong> as the repository.
+            Click <strong>Generate token</strong>, copy it, and paste it above with <strong>your-name/slate-notes</strong> as the repository.
             Do this once on each device.
           </li>
         </ol>
@@ -466,8 +497,10 @@ function CalendarSettings() {
     <section>
       <h3>Calendar &amp; time</h3>
       <p className="muted">
-        The Calendar button shows your daily notes by month. Connect Google Calendar to see your events there too and add new ones without
-        leaving Slate — or skip it and use Google’s event page or an .ics file for Apple Calendar.
+        The Calendar button shows your daily notes by month.{' '}
+        {isNativeApp
+          ? 'Add a line to your calendar with Google’s event page or an .ics file for Apple Calendar.'
+          : 'Connect Google Calendar to see your events there too and add new ones without leaving Slate — or skip it and use Google’s event page or an .ics file for Apple Calendar.'}
       </p>
       <GoogleCalendarSettings />
       <Toggle
@@ -509,7 +542,7 @@ function DataSettings() {
       <div className="danger-zone">
         <div>
           <strong>Reset this device</strong>
-          <p className="muted small">Removes all notes, settings and tokens from this device only, and cancels Slate’s Google Calendar access. Anything already synced stays on GitHub.</p>
+          <p className="muted small">Removes all notes, settings, chats and tokens (AI keys included) from this device only, and cancels Slate’s Google Calendar access. Anything already synced stays on GitHub.</p>
         </div>
         <button
           type="button"
@@ -521,6 +554,8 @@ function DataSettings() {
               : 'Remove all Slate data from this device? Your GitHub copy is not touched.'
             if (!confirm(msg)) return
             await revokeGoogle()
+            // AI keys can live in the Keychain, which clearing site storage doesn't touch.
+            await clearAiSecrets()
             await clearAll()
             try {
               localStorage.clear()

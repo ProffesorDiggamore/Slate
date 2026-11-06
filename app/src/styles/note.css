@@ -1,0 +1,338 @@
+/* The note page: a calm header (a grey meta line, the icon as a soft tile
+   beside the title, the Ask AI orb) and properties as quiet rows. Imported by
+   NotePage.tsx and scoped to .note-page so it wins over the global sheets
+   whatever order they load in. Spring tokens (--ed-*) come from editor.css. */
+
+/* ------------------------------------------------------------------ header */
+
+.note-page .note-head {
+  position: relative;
+  padding-top: 52px;
+}
+
+.note-page .note-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  min-height: 28px;
+  margin-bottom: 6px;
+}
+
+.note-page .note-meta {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.note-page .note-meta:empty {
+  display: none;
+}
+
+/* "Add icon" / "Add property" stay out of the way until you hover the page. */
+.note-page .note-controls {
+  display: flex;
+  gap: 2px;
+  margin-left: -6px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.note-page .note-meta:not(:empty) + .note-controls {
+  margin-left: 0;
+}
+
+.note-page:hover .note-controls,
+.note-page .note-controls:focus-within {
+  opacity: 1;
+}
+
+.note-page .note-ghost {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: var(--radius-pill, 999px);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-faint);
+  /* Presses through the shared scale (base.css), one spring, no double dip. */
+  --press-scale: 0.95;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    var(--press-transition);
+}
+
+@media (hover: hover) {
+  .note-page .note-ghost:hover {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+  }
+}
+
+.note-page .note-ghost:active {
+  transition-duration: 0.15s, 0.15s, 80ms;
+}
+
+.note-page .note-title-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.note-page .note-icon-tile {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-top: 0;
+  border-radius: 14px;
+  background: var(--bg-subtle, var(--bg-hover));
+  box-shadow: inset 0 0 0 1px var(--card-border, var(--border));
+  --press-scale: 0.92;
+  transition:
+    background-color 0.15s ease,
+    var(--press-transition);
+}
+
+@media (hover: hover) {
+  .note-page .note-icon-tile:hover {
+    background: var(--bg-active);
+  }
+}
+
+.note-page .note-icon-tile:active {
+  transition-duration: 0.15s, 80ms;
+}
+
+.note-page .page-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0 0 10px;
+  padding: 1px 0 2px;
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -0.025em;
+}
+
+/* The Ask AI orb: a white circle with a hairline, a little lift on hover. */
+.note-page .note-ask {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: var(--card-bg, var(--bg-elevated));
+  border: 1px solid var(--card-border, var(--border));
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 6px 16px -8px color-mix(in srgb, var(--accent) 55%, transparent);
+  /* The hover lift is its own transform; the press is the shared scale. */
+  --press-scale: 0.9;
+  transition:
+    box-shadow 0.25s ease,
+    transform var(--ed-dur-bouncy) var(--ed-bouncy),
+    var(--press-transition);
+}
+
+@media (hover: hover) {
+  .note-page .note-ask:hover {
+    transform: scale(1.07);
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.04),
+      0 8px 22px -8px color-mix(in srgb, var(--accent) 70%, transparent);
+  }
+}
+
+.note-page .note-ask:active {
+  transition-duration: 0.25s, 0.25s, 80ms;
+}
+
+.note-page .note-ghost:focus-visible,
+.note-page .note-icon-tile:focus-visible,
+.note-page .note-ask:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.note-page .note-title-row .emoji-picker {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+}
+
+/* -------------------------------------------------------------- properties */
+
+/* Grey icon + grey label in a fixed column, the value beside it, and one
+   hairline under the whole block. */
+.note-page .props {
+  gap: 0;
+  margin: 0 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.note-page .prop-row {
+  min-height: 34px;
+  gap: 8px;
+  border-radius: 10px;
+  transition: background-color 0.15s ease;
+}
+
+.note-page .prop-key {
+  width: 120px;
+  gap: 8px;
+  padding-left: 6px;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+}
+
+.note-page .prop-key svg {
+  color: var(--text-faint);
+}
+
+.note-page .prop-value {
+  padding: 3px 6px;
+  border-radius: 8px;
+  color: var(--text);
+}
+
+.note-page .prop-value.is-empty {
+  color: var(--text-faint);
+}
+
+.note-page .prop-chip {
+  padding: 2px 9px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  background: var(--bg-subtle, var(--bg-hover));
+  box-shadow: inset 0 0 0 1px var(--card-border, transparent);
+  color: var(--text);
+}
+
+/* Checkbox properties match the to-dos in the page. */
+.note-page .prop-check {
+  appearance: none;
+  -webkit-appearance: none;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin: 0 auto 0 6px;
+  border-radius: 5px;
+  border: 1.5px solid var(--border-strong);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform var(--ed-dur-bouncy) var(--ed-bouncy);
+}
+
+.note-page .prop-check::after {
+  content: '';
+  width: 8px;
+  height: 4.5px;
+  margin-top: -2px;
+  border-left: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  opacity: 0;
+  transform: rotate(-45deg) scale(0.3);
+  transition:
+    transform var(--ed-dur-bouncy) var(--ed-bouncy),
+    opacity 0.12s ease;
+}
+
+.note-page .prop-check:checked {
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+
+.note-page .prop-check:checked::after {
+  opacity: 1;
+  transform: rotate(-45deg) scale(1);
+}
+
+.note-page .prop-check:active {
+  transform: scale(0.85);
+  transition-duration: 0.2s, 0.2s, 80ms;
+}
+
+.note-page .prop-add {
+  gap: 6px;
+  margin: 4px 0 0 6px;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.note-page .prop-add:hover {
+  color: var(--text-secondary);
+}
+
+/* ------------------------------------------------------------------ phones */
+
+@media (max-width: 760px) {
+  .note-page .note-head {
+    padding-top: 14px;
+  }
+
+  .note-page .note-title-row {
+    gap: 12px;
+  }
+
+  .note-page .page-title {
+    font-size: 28px;
+    line-height: 1.2;
+    padding-top: 4px;
+  }
+
+  .note-page .note-ask {
+    width: 40px;
+    height: 40px;
+    margin-top: 0;
+  }
+
+  .note-page .prop-key {
+    width: 108px;
+  }
+
+  .note-page .prop-row {
+    min-height: 44px;
+  }
+}
+
+/* The 18px property checkbox takes a 44px tap (::after is its check mark). */
+@media (pointer: coarse) {
+  .note-page .prop-check {
+    position: relative;
+  }
+
+  .note-page .prop-check::before {
+    content: '';
+    position: absolute;
+    inset: -13px;
+  }
+}
+
+/* Touch screens can't hover: keep the page controls showing, with full-size targets. */
+@media (hover: none) {
+  .note-page .note-controls {
+    opacity: 1;
+  }
+
+  .note-page .note-ghost::before {
+    content: '';
+    position: absolute;
+    inset: -8px 0;
+  }
+}

@@ -25,6 +25,7 @@ import {
   Pencil,
   Pilcrow,
   Quote,
+  Sparkles,
   Strikethrough,
   Trash,
   Underline,
@@ -32,9 +33,11 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { AiMenu } from './AiMenu'
 import { BLOCK_LABELS, currentBlock, turnInto, type BlockKind } from './blocks'
 import { lineCount } from './restructure'
 import { ShapeMenu } from './ShapeMenu'
+import { mod, shift } from '../components/ui'
 
 function Btn({ active, onClick, title, children }: { active?: boolean; onClick: () => void; title: string; children: React.ReactNode }) {
   return (
@@ -101,8 +104,17 @@ function normalizeUrl(raw: string): string {
   return `https://${v}`
 }
 
-export function SelectionToolbar({ editor, onLinkPage }: { editor: Editor; onLinkPage: (text: string) => void }) {
-  const [mode, setMode] = useState<'main' | 'link' | 'turn'>('main')
+export function SelectionToolbar({
+  editor,
+  onLinkPage,
+  ai,
+}: {
+  editor: Editor
+  onLinkPage: (text: string) => void
+  /** Show the ✨ AI actions (left out on encrypted pages). */
+  ai?: { attachPath?: string }
+}) {
+  const [mode, setMode] = useState<'main' | 'link' | 'turn' | 'ai'>('main')
   const [url, setUrl] = useState('')
   const input = useRef<HTMLInputElement>(null)
   const s = useEditorState({
@@ -149,7 +161,7 @@ export function SelectionToolbar({ editor, onLinkPage }: { editor: Editor; onLin
     >
       {mode === 'link' ? (
         <form
-          className="tb-link-form"
+          className="tb-link-form glass"
           onSubmit={(e) => {
             e.preventDefault()
             applyLink()
@@ -173,55 +185,86 @@ export function SelectionToolbar({ editor, onLinkPage }: { editor: Editor; onLin
           </button>
         </form>
       ) : (
-        <div className="tb-row">
-          <div className="tb-turn">
-            <button type="button" className="tb-btn tb-text" onMouseDown={(e) => e.preventDefault()} onClick={() => setMode(mode === 'turn' ? 'main' : 'turn')}>
+        <>
+          <div className="tb-row tb-main glass">
+            <button
+              type="button"
+              className={'tb-btn tb-text tb-block' + (mode === 'turn' ? ' is-open' : '')}
+              aria-expanded={mode === 'turn'}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => setMode(mode === 'turn' ? 'main' : 'turn')}
+            >
               {s.multi ? 'Turn into' : BLOCK_LABELS[s.block]}
-              <ChevronDown size={14} />
+              <ChevronDown size={14} className="tb-chevron" />
             </button>
-            {mode === 'turn' &&
-              (s.multi ? <ShapeMenu editor={editor} onDone={() => setMode('main')} /> : <TurnIntoMenu editor={editor} onDone={() => setMode('main')} />)}
+            {ai && (
+              <button
+                type="button"
+                className={'tb-btn tb-text tb-ai' + (mode === 'ai' ? ' is-active' : '')}
+                title="Ask AI to rewrite, shorten, translate…"
+                aria-expanded={mode === 'ai'}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setMode(mode === 'ai' ? 'main' : 'ai')}
+              >
+                <Sparkles size={15} />
+                AI
+              </button>
+            )}
+            <span className="tb-sep" />
+            {/* On a phone the pill can't fit everything: these scroll sideways inside it. */}
+            <div className="tb-scroll">
+              <Btn title={`Bold (${mod}B)`} active={s.bold} onClick={() => editor.chain().focus().toggleBold().run()}>
+                <Bold size={16} strokeWidth={2.25} />
+              </Btn>
+              <Btn title={`Italic (${mod}I)`} active={s.italic} onClick={() => editor.chain().focus().toggleItalic().run()}>
+                <Italic size={16} />
+              </Btn>
+              <Btn title={`Underline (${mod}U)`} active={s.underline} onClick={() => editor.chain().focus().toggleUnderline().run()}>
+                <Underline size={16} />
+              </Btn>
+              <Btn title={`Strikethrough (${mod}${shift}S)`} active={s.strike} onClick={() => editor.chain().focus().toggleStrike().run()}>
+                <Strikethrough size={16} />
+              </Btn>
+              <Btn title={`Inline code (${mod}E)`} active={s.code} onClick={() => editor.chain().focus().toggleCode().run()}>
+                <Code size={16} />
+              </Btn>
+              <Btn title={`Highlight (${mod}${shift}H)`} active={s.highlight} onClick={() => editor.chain().focus().toggleHighlight().run()}>
+                <Highlighter size={16} />
+              </Btn>
+              <span className="tb-sep" />
+              <Btn
+                title="Link"
+                active={s.link}
+                onClick={() => {
+                  setUrl(s.href)
+                  setMode('link')
+                }}
+              >
+                <Link size={16} />
+              </Btn>
+              <Btn
+                title="Link to page"
+                onClick={() => {
+                  const { from, to } = editor.state.selection
+                  onLinkPage(editor.state.doc.textBetween(from, to, ' '))
+                }}
+              >
+                <FileText size={16} />
+              </Btn>
+            </div>
           </div>
-          <span className="tb-sep" />
-          <Btn title="Bold (⌘B)" active={s.bold} onClick={() => editor.chain().focus().toggleBold().run()}>
-            <Bold size={16} strokeWidth={2.25} />
-          </Btn>
-          <Btn title="Italic (⌘I)" active={s.italic} onClick={() => editor.chain().focus().toggleItalic().run()}>
-            <Italic size={16} />
-          </Btn>
-          <Btn title="Underline (⌘U)" active={s.underline} onClick={() => editor.chain().focus().toggleUnderline().run()}>
-            <Underline size={16} />
-          </Btn>
-          <Btn title="Strikethrough (⌘⇧S)" active={s.strike} onClick={() => editor.chain().focus().toggleStrike().run()}>
-            <Strikethrough size={16} />
-          </Btn>
-          <Btn title="Inline code (⌘E)" active={s.code} onClick={() => editor.chain().focus().toggleCode().run()}>
-            <Code size={16} />
-          </Btn>
-          <Btn title="Highlight (⌘⇧H)" active={s.highlight} onClick={() => editor.chain().focus().toggleHighlight().run()}>
-            <Highlighter size={16} />
-          </Btn>
-          <span className="tb-sep" />
-          <Btn
-            title="Link"
-            active={s.link}
-            onClick={() => {
-              setUrl(s.href)
-              setMode('link')
-            }}
-          >
-            <Link size={16} />
-          </Btn>
-          <Btn
-            title="Link to page"
-            onClick={() => {
-              const { from, to } = editor.state.selection
-              onLinkPage(editor.state.doc.textBetween(from, to, ' '))
-            }}
-          >
-            <FileText size={16} />
-          </Btn>
-        </div>
+          {/* Menus hang below the glass pill (outside it, so the glass never clips them). */}
+          {mode === 'turn' && (
+            <div className="tb-pop">
+              {s.multi ? <ShapeMenu editor={editor} onDone={() => setMode('main')} /> : <TurnIntoMenu editor={editor} onDone={() => setMode('main')} />}
+            </div>
+          )}
+          {mode === 'ai' && ai && (
+            <div className="tb-pop">
+              <AiMenu editor={editor} attachPath={ai.attachPath} onDone={() => setMode('main')} />
+            </div>
+          )}
+        </>
       )}
     </BubbleMenu>
   )
@@ -242,7 +285,7 @@ export function LinkToolbar({ editor }: { editor: Editor }) {
     >
       {editing ? (
         <form
-          className="tb-link-form"
+          className="tb-link-form glass"
           onSubmit={(e) => {
             e.preventDefault()
             const v = normalizeUrl(url)
@@ -258,7 +301,7 @@ export function LinkToolbar({ editor }: { editor: Editor }) {
           </button>
         </form>
       ) : (
-        <div className="tb-row">
+        <div className="tb-row glass">
           <a className="tb-href" href={href} target="_blank" rel="noopener noreferrer" title={href}>
             {href.replace(/^https?:\/\/(www\.)?/, '')}
             <ArrowUpRight size={14} />
@@ -291,7 +334,7 @@ export function TableToolbar({ editor }: { editor: Editor }) {
       options={{ placement: 'top', offset: 10, flip: true, shift: { padding: 8 } }}
       shouldShow={({ editor: e, from, to }) => from === to && e.isEditable && e.isActive('table')}
     >
-      <div className="tb-row tb-table">
+      <div className="tb-row tb-table glass">
         <button type="button" className="tb-btn tb-text" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().addRowAfter().run()}>
           + Row
         </button>

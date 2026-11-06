@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLinkIndex, useResolvedTheme } from '../lib/hooks'
 import { titleOf } from '../lib/paths'
 import { openNote } from '../lib/router'
+import { useSettings } from '../lib/settings'
 import { createNote, useVault } from '../lib/vault'
 
 interface GNode extends NodeObject {
@@ -15,10 +16,61 @@ interface GNode extends NodeObject {
 }
 type GLink = LinkObject<GNode>
 
+/** A design token as a colour the canvas can paint. Tokens can be color-mix()
+ *  expressions (the accent in dark mode, palettes), so let the browser resolve
+ *  one onto a 1px canvas and read the pixel back. */
+function tokenColor(ctx: CanvasRenderingContext2D | null, cs: CSSStyleDeclaration, name: string, fallback: string): string {
+  const raw = cs.getPropertyValue(name).trim()
+  if (!raw || !ctx) return raw || fallback
+  if (/^(#|rgb)/i.test(raw)) return raw
+  const probe = document.createElement('span')
+  probe.style.color = raw
+  probe.style.display = 'none'
+  document.body.appendChild(probe)
+  const computed = getComputedStyle(probe).color
+  probe.remove()
+  ctx.clearRect(0, 0, 1, 1)
+  ctx.fillStyle = fallback
+  ctx.fillStyle = computed
+  ctx.fillRect(0, 0, 1, 1)
+  const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data
+  return `rgba(${r}, ${g}, ${b}, ${(a / 255).toFixed(3)})`
+}
+
 function readColors() {
   const cs = getComputedStyle(document.documentElement)
-  const v = (n: string) => cs.getPropertyValue(n).trim()
-  return { accent: v('--accent'), link: v('--graph-link'), node: v('--graph-node'), ghost: v('--graph-ghost'), text: v('--text-secondary'), faint: v('--text-faint'), bg: v('--bg') }
+  const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true })
+  const v = (n: string, fallback: string) => tokenColor(ctx, cs, n, fallback)
+  return {
+    accent: v('--accent', '#2f6bff'),
+    link: v('--graph-link', 'rgba(128,128,128,0.2)'),
+    node: v('--graph-node', 'rgba(128,128,128,0.6)'),
+    ghost: v('--graph-ghost', 'rgba(128,128,128,0.4)'),
+    text: v('--text-secondary', '#6e6e73'),
+    faint: v('--text-faint', '#a1a1a6'),
+    bg: v('--bg', '#ffffff'),
+  }
+}
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+
+interface Fittable {
+  getGraphBbox: () => { x: number[]; y: number[] } | null
+  zoomToFit: (ms: number, pad: number) => unknown
+  centerAt: (x: number, y: number, ms: number) => unknown
+  zoom: (k: number, ms: number) => unknown
+}
+
+/** Zoom to show every page. With one page (or a tight clump) zoomToFit blows a
+ *  single dot up to fill the screen, so those get a sensible fixed zoom. */
+function fit(g: Fittable, ms: number, pad: number) {
+  const box = g.getGraphBbox()
+  if (box && (box.x[1] - box.x[0] > 120 || box.y[1] - box.y[0] > 120)) {
+    g.zoomToFit(ms, pad)
+    return
+  }
+  g.centerAt(box ? (box.x[0] + box.x[1]) / 2 : 0, box ? (box.y[0] + box.y[1]) / 2 : 0, ms)
+  g.zoom(2.5, ms)
 }
 
 export default function GraphView() {
@@ -29,6 +81,8 @@ export default function GraphView() {
   const paths = useVault((s) => s.paths)
   const index = useLinkIndex()
   const theme = useResolvedTheme()
+  const palette = useSettings((s) => s.palette)
+  const accent = useSettings((s) => s.accent)
   const [ghosts, setGhosts] = useState(false)
   const [orphans, setOrphans] = useState(true)
   const [ready, setReady] = useState(false)
@@ -84,7 +138,7 @@ export default function GraphView() {
           // Fit once the layout has settled, not while nodes are still bunched up.
           if (fitPending.current) {
             fitPending.current = false
-            g.zoomToFit(500, 70)
+            fit(g, 500, 70)
           }
         })
         .linkWidth((l) => (hover.current && (l.source === hover.current || l.target === hover.current) ? 1.6 : 0.8))
@@ -167,17 +221,21 @@ export default function GraphView() {
     g.graphData(data as unknown as { nodes: GNode[]; links: GLink[] })
   }, [data, ready])
 
+  // Re-read the tokens after App has applied a new theme, palette or accent.
   useEffect(() => {
-    colors.current = readColors()
-    graph.current?.backgroundColor(colors.current.bg)
-  }, [theme, ready])
+    const f = requestAnimationFrame(() => {
+      colors.current = readColors()
+      graph.current?.backgroundColor(colors.current.bg)
+    })
+    return () => cancelAnimationFrame(f)
+  }, [theme, palette, accent, ready])
 
   return (
     <div className="graph-page">
       <div className="graph-canvas" ref={box} />
-      <div className="graph-controls">
+      <div className="graph-controls glass glass-strong">
         <div className="graph-stat">
-          <Network size={15} /> {data.nodes.filter((n) => !n.ghost).length} pages · {data.links.length} links
+          <Network size={15} /> {plural(data.nodes.filter((n) => !n.ghost).length, 'page')} · {plural(data.links.length, 'link')}
         </div>
         <label className="graph-toggle">
           <input type="checkbox" checked={orphans} onChange={(e) => setOrphans(e.target.checked)} /> Unlinked pages
@@ -185,7 +243,7 @@ export default function GraphView() {
         <label className="graph-toggle">
           <input type="checkbox" checked={ghosts} onChange={(e) => setGhosts(e.target.checked)} /> Missing pages
         </label>
-        <button type="button" className="btn btn-sm" onClick={() => graph.current?.zoomToFit(400, 60)}>
+        <button type="button" className="btn btn-sm" onClick={() => graph.current && fit(graph.current, 400, 60)}>
           <Maximize size={14} /> Fit
         </button>
       </div>

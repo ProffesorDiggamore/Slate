@@ -19,6 +19,48 @@ export function useMediaQuery(q: string): boolean {
 export const useIsMobile = () => useMediaQuery('(max-width: 760px)')
 export const useIsTouch = () => useMediaQuery('(hover: none) and (pointer: coarse)')
 
+const isTextField = (el: Element | null) =>
+  !!el && (el instanceof HTMLTextAreaElement || (el instanceof HTMLElement && el.isContentEditable) || (el instanceof HTMLInputElement && !/^(checkbox|radio|range|color|button|submit|reset|file|date|time)$/.test(el.type)))
+
+/** True while the on-screen keyboard is up. The visible viewport shrinks by the
+ *  keyboard's height (Safari) or the whole window does (the iOS app, Chrome with
+ *  resizes-content), so compare against the tallest height seen at this width,
+ *  and only while something you can type into has focus. */
+export function useKeyboardOpen(): boolean {
+  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    const vv = window.visualViewport
+    const tallest = new Map<number, number>()
+    const check = () => {
+      const h = vv?.height ?? window.innerHeight
+      const w = Math.round(window.innerWidth)
+      const max = Math.max(tallest.get(w) ?? 0, h)
+      tallest.set(w, max)
+      setOpen(isTextField(document.activeElement) && max - h > 150)
+    }
+    // Focus moves before the keyboard animates in; look again once it has.
+    let t = 0
+    const later = () => {
+      check()
+      clearTimeout(t)
+      t = window.setTimeout(check, 350)
+    }
+    check()
+    vv?.addEventListener('resize', check)
+    window.addEventListener('resize', check)
+    document.addEventListener('focusin', later)
+    document.addEventListener('focusout', later)
+    return () => {
+      clearTimeout(t)
+      vv?.removeEventListener('resize', check)
+      window.removeEventListener('resize', check)
+      document.removeEventListener('focusin', later)
+      document.removeEventListener('focusout', later)
+    }
+  }, [])
+  return open
+}
+
 export function useResolvedTheme(): 'light' | 'dark' {
   const theme = useSettings((s) => s.theme)
   const prefersDark = useMediaQuery('(prefers-color-scheme: dark)')

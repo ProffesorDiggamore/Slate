@@ -1,5 +1,7 @@
 import { Download, Share, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { isNativeApp } from '../lib/native'
+import { useRoute } from '../lib/router'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -18,6 +20,7 @@ if (typeof window !== 'undefined') {
 
 export function isStandalone(): boolean {
   return (
+    isNativeApp ||
     window.matchMedia('(display-mode: standalone)').matches ||
     window.matchMedia('(display-mode: window-controls-overlay)').matches ||
     (navigator as unknown as { standalone?: boolean }).standalone === true
@@ -92,8 +95,12 @@ export function InstallSteps() {
       {platform === 'chromium' && !prompt && (
         <ol>
           <li>
-            Click the <strong>install icon</strong> at the right end of the address bar (a screen with a down arrow),
-            or open the <strong>⋮</strong> menu → <strong>Cast, save and share → Install page as app…</strong>
+            Click the <strong>install icon</strong> at the right end of the address bar (a screen with a down arrow), or open the{' '}
+            {/Edg\//.test(navigator.userAgent) ? (
+              <><strong>⋯</strong> menu → <strong>Apps → Install Slate</strong></>
+            ) : (
+              <><strong>⋮</strong> menu → <strong>Cast, save and share → Install page as app…</strong></>
+            )}
           </li>
         </ol>
       )}
@@ -114,6 +121,7 @@ const DISMISS_KEY = 'cairn.installHint.dismissed'
 // One-time nudge on phones that haven't installed yet.
 export function InstallBanner() {
   const [show, setShow] = useState(false)
+  const route = useRoute()
   useEffect(() => {
     let dismissed = false
     try {
@@ -124,7 +132,8 @@ export function InstallBanner() {
     const p = detectPlatform()
     setShow(!dismissed && !isStandalone() && (p === 'ios' || p === 'android'))
   }, [])
-  if (!show) return null
+  // The assistant's message box sits at the bottom of the screen; don't cover it.
+  if (!show || route.name === 'ai') return null
   const close = () => {
     setShow(false)
     try {
@@ -134,12 +143,12 @@ export function InstallBanner() {
     }
   }
   return (
-    <div className="install-banner">
+    <div className="install-banner glass glass-strong">
       <div>
         <strong>Get the Slate app</strong>
         <InstallSteps />
       </div>
-      <button type="button" className="icon-btn" onClick={close} aria-label="Dismiss">
+      <button type="button" className="circle-btn is-quiet" onClick={close} aria-label="Dismiss">
         <X size={18} />
       </button>
     </div>

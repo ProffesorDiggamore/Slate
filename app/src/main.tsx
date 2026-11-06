@@ -1,3 +1,10 @@
+// The global stylesheets come first so the CSS that components import for
+// themselves (home, note, AI, orb) loads after them and wins at equal specificity.
+import './styles/base.css'
+import './styles/app.css'
+import './styles/editor.css'
+import './styles/extras.css'
+import './styles/features.css'
 import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import { App } from './App'
@@ -7,11 +14,6 @@ import { finishGoogleSignIn } from './lib/google/callback'
 import { CALLBACK_PATH } from './lib/google/keys'
 import { toast } from './lib/toasts'
 import { initVault } from './lib/vault'
-import './styles/base.css'
-import './styles/app.css'
-import './styles/editor.css'
-import './styles/extras.css'
-import './styles/features.css'
 
 // An older cached copy of the app can answer the Google sign-in page's URL with
 // the app itself; finish the sign-in there instead of starting the app.
@@ -21,6 +23,10 @@ else boot()
 function boot() {
   initGoogleAuth()
   void initVault()
+
+  // iOS Safari only shows :active (the press-and-spring feedback on every
+  // button) once the page listens for touches.
+  document.addEventListener('touchstart', () => {}, { passive: true })
 
   // Ask the browser not to evict notes under storage pressure.
   void navigator.storage?.persist?.().catch(() => {})

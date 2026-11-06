@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef } from 'react'
+import { Fragment, lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { CalendarPanel } from './components/CalendarPanel'
 import { CommandPalette } from './components/CommandPalette'
 import { PassphraseHost } from './components/EncryptedNote'
@@ -12,6 +12,7 @@ import { NotePage } from './components/NotePage'
 import { Onboarding } from './components/Onboarding'
 import { SettingsModal } from './components/SettingsModal'
 import { Sidebar } from './components/Sidebar'
+import { showsTabBar, TabBar } from './components/TabBar'
 import { TopBar } from './components/TopBar'
 import { TablePage } from './components/TablePage'
 import { TasksPage } from './components/TasksPage'
@@ -19,12 +20,13 @@ import { TrashPage } from './components/TrashPage'
 import { Logo, MenuHost, Toasts } from './components/ui'
 import { useUI } from './components/uiState'
 import { useIsMobile, useResolvedTheme } from './lib/hooks'
-import { openNote, parseHash, useRoute } from './lib/router'
-import { setSettings, useSettings } from './lib/settings'
+import { openNote, parseHash, useRoute, type Route } from './lib/router'
+import { accentFor, setSettings, useSettings } from './lib/settings'
 import { startAutoSync } from './lib/sync/manager'
 import { onNoteMoved, useVault } from './lib/vault'
 
 const GraphView = lazy(() => import('./components/GraphView'))
+const AiPage = lazy(() => import('./components/AiPage'))
 
 export function App() {
   const ready = useVault((s) => s.ready)
@@ -37,6 +39,8 @@ export function App() {
   const mobile = useIsMobile()
   const theme = useResolvedTheme()
   const scroller = useRef<HTMLDivElement>(null)
+  // Whether the page has scrolled under the top bar (hairline, phone titles).
+  const [scrolled, setScrolled] = useState(false)
 
   const palette = useSettings((s) => s.palette)
   const accent = useSettings((s) => s.accent)
@@ -48,7 +52,7 @@ export function App() {
     root.dataset.theme = theme
     root.dataset.palette = palette
     root.dataset.accent = ''
-    root.style.setProperty('--accent', accent)
+    root.style.setProperty('--accent', accentFor(accent, theme))
     root.style.setProperty('--editor-font-size', `${fontSize}px`)
     root.style.setProperty('--editor-line-height', density === 'compact' ? '1.45' : density === 'airy' ? '1.75' : '1.6')
     root.style.setProperty('--block-gap', density === 'compact' ? '1px' : density === 'airy' ? '10px' : '4px')
@@ -74,6 +78,7 @@ export function App() {
   useEffect(() => {
     useUI.setState({ drawer: false })
     scroller.current?.scrollTo({ top: 0 })
+    setScrolled(false)
   }, [route])
 
   useEffect(() => {
@@ -141,12 +146,24 @@ export function App() {
     case 'table':
       page = <TablePage folder={route.folder} />
       break
+    case 'ai':
+      page = (
+        <Suspense fallback={null}>
+          <AiPage />
+        </Suspense>
+      )
+      break
     default:
       page = <HomePage />
   }
 
+  // Phones float a glass tab bar over these routes, so they get room for it.
+  const tabRoute = mobile && showsTabBar(route.name)
+  // The assistant's message box owns the bottom of the screen (toasts move up).
+  const aiRoute = route.name === 'ai'
+
   return (
-    <div className={'app' + (mobile ? ' is-mobile' : '')}>
+    <div className={'app' + (mobile ? ' is-mobile' : '') + (tabRoute ? ' has-tabbar' : '') + (aiRoute ? ' is-ai' : '')}>
       {!mobile && sidebarOpen && <Sidebar />}
       {mobile && (
         <div className={'drawer' + (drawer ? ' is-open' : '')} aria-hidden={!drawer}>
@@ -155,11 +172,19 @@ export function App() {
         </div>
       )}
       <main className="main">
-        <TopBar />
-        <div className={'main-scroll' + (route.name === 'graph' ? ' is-fixed' : '')} ref={scroller}>
-          {page}
+        {/* The assistant draws its own header (back, new chat, history). */}
+        {route.name !== 'ai' && <TopBar scrolled={scrolled} />}
+        <div
+          className={'main-scroll' + (route.name === 'graph' ? ' is-fixed' : '')}
+          ref={scroller}
+          onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 48)}
+        >
+          {/* Keyed by route so every page change mounts afresh: on phones that
+              mount is the page transition (app.css). */}
+          <Fragment key={routeKey(route)}>{page}</Fragment>
         </div>
       </main>
+      {mobile && <TabBar />}
       <CommandPalette />
       <SettingsModal />
       <CalendarPanel />
@@ -173,3 +198,5 @@ export function App() {
     </div>
   )
 }
+
+const routeKey = (r: Route) => r.name + ':' + ('path' in r ? r.path : 'folder' in r ? r.folder : '')

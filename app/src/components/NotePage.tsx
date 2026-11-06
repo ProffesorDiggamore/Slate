@@ -6,7 +6,8 @@ import { NoteEditor } from '../editor/NoteEditor'
 import type { TimeClick } from '../editor/extensions/timeChips'
 import { dateFromTitle, downloadIcs, findDate, formatSpan, isoDay, openInGoogleCalendar, titleAround, type CalendarEvent } from '../lib/calendar'
 import { addToGoogle, googleConnected } from '../lib/google/store'
-import { useIsMobile, useIsTouch, useLinkIndex, useNoteIcons, useResolver } from '../lib/hooks'
+import { relativeTime, useIsTouch, useLinkIndex, useNoteIcons, useResolver } from '../lib/hooks'
+import { openAi } from '../lib/ai/store'
 import { NoteIcon } from './NoteIcon'
 import { linkContexts, stripSubpath } from '../lib/links'
 import { getField, joinFrontmatter, setField, splitFrontmatter } from '../lib/markdown/frontmatter'
@@ -20,9 +21,11 @@ import { createNote, renameNote, updateContent, useVault } from '../lib/vault'
 import { EmojiPicker } from './EmojiPicker'
 import { EncryptedNote } from './EncryptedNote'
 import { MobileToolbar } from './MobileToolbar'
+import { Orb } from './Orb'
 import { PropertiesPanel } from './PropertiesPanel'
 import { openMenu } from './ui'
 import { openCalendar } from './uiState'
+import '../styles/note.css'
 
 // Cross-page hand-offs (focus the body after renaming, jump to a #heading).
 let focusBodyOnMount = false
@@ -46,7 +49,9 @@ export function openLinkTarget(target: string, resolve: (t: string) => string | 
   const parts = name.split('/')
   const title = parts.pop()!
   const folder = parts.join('/')
-  openNote(createNote({ folder, title }))
+  // Instant: the new page's title takes focus, and iOS only raises the keyboard
+  // for a focus that happens inside the tap (a page transition commits too late).
+  openNote(createNote({ folder, title }), { instant: true })
 }
 
 export function NotePage({ path }: { path: string }) {
@@ -60,7 +65,7 @@ export function NotePage({ path }: { path: string }) {
         <h2>This page doesn’t exist</h2>
         <p>It may have been renamed, moved to Trash, or not synced to this device yet.</p>
         <div className="row-gap">
-          <button type="button" className="btn btn-primary" onClick={() => openNote(createNote({ folder: dirname(path), title: titleOf(path) }))}>
+          <button type="button" className="btn btn-primary" onClick={() => openNote(createNote({ folder: dirname(path), title: titleOf(path) }), { instant: true })}>
             Create “{titleOf(path)}”
           </button>
           <button type="button" className="btn" onClick={() => navigate({ name: 'home' })}>
@@ -116,7 +121,6 @@ export function NoteView({ path, source }: { path: string; source?: NoteSource }
   const foldArrows = useSettings((s) => s.foldArrows)
   const spellcheck = useSettings((s) => s.spellcheck)
   const touch = useIsTouch()
-  const mobile = useIsMobile()
   const resolver = useResolver()
   const resolverRef = useRef(resolver)
   resolverRef.current = resolver
@@ -197,34 +201,45 @@ export function NoteView({ path, source }: { path: string; source?: NoteSource }
   // renamed it (that remounts this view and the body should get the cursor), and
   // not again later just because the page is empty.
   const [isNew] = useState(() => !!file && !file.content && Date.now() - file.ctime < 4000 && !focusBodyOnMount)
+  // Encrypted pages never go to an AI: no Ask AI button, no AI actions on their text.
+  const ai = useMemo(() => (source ? undefined : { attachPath: path }), [source, path])
 
   return (
-    <div className={`page font-${font} width-${pageWidth}${pageWidth === 'full' ? ' is-full' : ''}${foldArrows === 'always' ? ' folds-always' : ''}`}>
+    <div className={`page note-page font-${font} width-${pageWidth}${pageWidth === 'full' ? ' is-full' : ''}${foldArrows === 'always' ? ' folds-always' : ''}`}>
       <div className="page-inner">
-        <div className={'page-icon-row' + (icon ? ' has-icon' : '')}>
-          {icon && (
-            <button type="button" className="page-icon" onClick={() => setPicker(true)} aria-label="Change icon">
-              <NoteIcon value={icon} size={mobile ? 58 : 76} />
-            </button>
-          )}
-          {(!icon || (!hasProps && !addingProp)) && (
-            <div className="page-controls">
-              {!icon && (
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setPicker(true)}>
-                  <FaceSlightlySmilingPlus size={15} /> Add icon
-                </button>
-              )}
-              {!hasProps && !addingProp && (
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAddingProp(true)}>
-                  <ListPlus size={15} /> Add property
-                </button>
-              )}
-            </div>
-          )}
-          {picker && <EmojiPicker current={icon} onPick={setIcon} onRemove={icon ? () => setIcon(null) : undefined} onClose={() => setPicker(false)} />}
-        </div>
-
-        <TitleField path={path} autoFocus={isNew} onEnter={() => editor?.commands.focus('start')} />
+        <header className="note-head">
+          <div className="note-meta-row">
+            <NoteMeta mtime={file?.mtime} created={getField(frontmatter, 'created')} />
+            {(!icon || (!hasProps && !addingProp)) && (
+              <div className="note-controls">
+                {!icon && (
+                  <button type="button" className="note-ghost" onClick={() => setPicker(true)}>
+                    <FaceSlightlySmilingPlus size={14} /> Add icon
+                  </button>
+                )}
+                {!hasProps && !addingProp && (
+                  <button type="button" className="note-ghost" onClick={() => setAddingProp(true)}>
+                    <ListPlus size={14} /> Add property
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+          <div className={'note-title-row' + (icon ? ' has-icon' : '')}>
+            {icon && (
+              <button type="button" className="note-icon-tile" onClick={() => setPicker(true)} aria-label="Change icon">
+                <NoteIcon value={icon} size={30} />
+              </button>
+            )}
+            <TitleField path={path} autoFocus={isNew} onEnter={() => editor?.commands.focus('start')} />
+            {ai && (
+              <button type="button" className="note-ask" onClick={() => openAi({ attachPath: path })} aria-label="Ask AI about this page" title="Ask AI about this page">
+                <Orb size={22} />
+              </button>
+            )}
+            {picker && <EmojiPicker current={icon} onPick={setIcon} onRemove={icon ? () => setIcon(null) : undefined} onClose={() => setPicker(false)} />}
+          </div>
+        </header>
         <PropertiesPanel frontmatter={frontmatter} onChange={setFrontmatter} adding={addingProp} setAdding={setAddingProp} />
 
         <NoteEditor
@@ -246,14 +261,36 @@ export function NoteView({ path, source }: { path: string; source?: NoteSource }
           touch={touch}
           foldKey={path}
           onTimeClick={(info) => timeMenu(path, info)}
+          ai={ai}
         />
 
         <div className="page-tail" onClick={() => editor?.commands.focus('end')} />
         <Backlinks path={path} />
       </div>
-      {touch && editor && <MobileToolbar editor={editor} />}
+      {touch && editor && <MobileToolbar editor={editor} ai={ai} />}
     </div>
   )
+}
+
+// "Edited 5 min ago", kept fresh while the page is open. A `created` property adds "Created Mar 3".
+function NoteMeta({ mtime, created }: { mtime?: number; created: string | null }) {
+  const [, tick] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => tick((n) => n + 1), 30_000)
+    return () => clearInterval(t)
+  }, [])
+  const parts: string[] = []
+  if (created) parts.push(`Created ${formatCreated(created)}`)
+  if (mtime) parts.push(`Edited ${relativeTime(mtime)}`)
+  return <span className="note-meta">{parts.join(' · ')}</span>
+}
+
+function formatCreated(raw: string): string {
+  const v = raw.trim().replace(/^["']|["']$/g, '')
+  const d = new Date(/^\d{4}-\d{2}-\d{2}$/.test(v) ? `${v}T00:00` : v)
+  if (Number.isNaN(d.getTime())) return v
+  const thisYear = d.getFullYear() === new Date().getFullYear()
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: thisYear ? undefined : 'numeric' })
 }
 
 function TitleField({ path, autoFocus, onEnter }: { path: string; autoFocus: boolean; onEnter: () => void }) {
@@ -265,11 +302,17 @@ function TitleField({ path, autoFocus, onEnter }: { path: string; autoFocus: boo
     setValue(UNTITLED.test(real) ? '' : real)
   }, [real])
 
+  // Grow with the text, and again when the window changes size (the title's font size and width depend on it).
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    el.style.height = '0px'
-    el.style.height = el.scrollHeight + 'px'
+    const fit = () => {
+      el.style.height = '0px'
+      el.style.height = el.scrollHeight + 'px'
+    }
+    fit()
+    window.addEventListener('resize', fit)
+    return () => window.removeEventListener('resize', fit)
   }, [value])
 
   useEffect(() => {

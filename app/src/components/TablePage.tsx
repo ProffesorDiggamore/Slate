@@ -167,8 +167,8 @@ export function TablePage({ folder }: { folder: string }) {
               </tr>
             </thead>
             <tbody>
-              {shown.map((r) => (
-                <tr key={r.path}>
+              {shown.map((r, i) => (
+                <tr key={r.path} style={{ '--i': i } as React.CSSProperties}>
                   <td className="table-name">
                     <button type="button" onClick={() => openNote(r.path)}>
                       {icons[r.path] ? <NoteIcon value={icons[r.path]} size={16} /> : <FileText size={15} strokeWidth={1.75} />}

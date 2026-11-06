@@ -1,0 +1,1376 @@
+/* The AI assistant page, its sheets, the consent prompt and Settings → AI.
+   Uses the shared tokens, springs, .glass and .circle-btn from base.css; the
+   fallbacks below sit in a low-priority layer, so they only apply when those
+   shared rules are missing and never override them. */
+
+@layer ai-fallback {
+  .circle-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .glass {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-pop);
+  }
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+  }
+  @keyframes orb-breathe {
+    0%,
+    100% {
+      transform: scale(0.97);
+      opacity: 0.55;
+    }
+    50% {
+      transform: scale(1.04);
+      opacity: 1;
+    }
+  }
+}
+
+.ai-page {
+  --ai-bouncy: var(--spring-bouncy, cubic-bezier(0.34, 1.32, 0.64, 1));
+  --ai-snappy: var(--spring-snappy, cubic-bezier(0.3, 1.12, 0.5, 1));
+  --ai-card: var(--card-bg, var(--bg));
+  --ai-line: var(--card-border, var(--border));
+  position: relative;
+  isolation: isolate;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.ai-glow {
+  z-index: 0;
+}
+
+/* ------------------------------------------------------------------ header */
+
+/* The header floats over the conversation, iOS style: glass circle buttons,
+   and a soft fade of the page colour so text scrolling under stays legible. */
+.ai-head {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr minmax(0, auto) 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: calc(8px + var(--safe-top)) calc(16px + var(--safe-right)) 6px calc(16px + var(--safe-left));
+}
+
+.ai-head::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 -20px;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    var(--bg) 0,
+    color-mix(in srgb, var(--bg) 80%, transparent) var(--safe-top),
+    color-mix(in srgb, var(--bg) 35%, transparent) 70%,
+    transparent
+  );
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(#000 55%, transparent);
+  mask-image: linear-gradient(#000 55%, transparent);
+  /* Nothing to blur at rest; it fades in once the conversation scrolls under. */
+  opacity: 0;
+  transition: opacity 0.3s var(--ease-out, ease-out);
+}
+
+.ai-page.is-scrolled .ai-head::before {
+  opacity: 1;
+}
+
+/* Two circles and a gap on each side, so the title stays truly centred. */
+.ai-head-side {
+  display: flex;
+  gap: 8px;
+  min-width: 88px;
+}
+.ai-head-side.is-end {
+  justify-content: flex-end;
+}
+
+.ai-head-title {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+.ai-head-title > span:first-child {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ai-head-sub {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* ------------------------------------------------------------------ scroll */
+
+/* Runs the full height, under the floating header and dock; its padding keeps
+   both clear at rest (--ai-dock-h is measured by AiPage). */
+.ai-scroll {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: calc(62px + var(--safe-top)) calc(16px + var(--safe-right)) calc(var(--ai-dock-h, 120px) + 12px) calc(16px + var(--safe-left));
+  scroll-padding-bottom: var(--ai-dock-h, 120px);
+}
+
+.ai-thread {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 6px;
+}
+
+/* ----------------------------------------------------------------- landing */
+
+.ai-landing {
+  max-width: 560px;
+  min-height: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+  padding: 8px 0;
+}
+
+.ai-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.ai-hero-orb {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  margin: 40px 0 12px;
+  animation: pop-in var(--dur-bouncy, 0.7s) var(--ai-bouncy) backwards;
+}
+/* Soft rings breathing around the orb, and a glow pooled beneath it. */
+.ai-hero-orb::before,
+.ai-hero-orb::after {
+  content: '';
+  position: absolute;
+  inset: -16px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--accent) 10%, transparent);
+  background: radial-gradient(circle, transparent 62%, color-mix(in srgb, var(--accent) 7%, transparent) 100%);
+  animation: orb-breathe 5s ease-in-out infinite;
+  pointer-events: none;
+}
+.ai-hero-orb::after {
+  inset: -38px;
+  border-color: color-mix(in srgb, var(--accent) 6%, transparent);
+  animation-delay: -2.5s;
+}
+
+.ai-hello {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text);
+  animation: fade-up var(--dur-snappy, 0.45s) var(--ai-snappy) backwards;
+}
+.ai-hello-sub {
+  margin: 6px 0 0;
+  max-width: 30ch;
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  animation: fade-up var(--dur-snappy, 0.45s) var(--ai-snappy) 40ms backwards;
+}
+
+/* Equal hairline pills, one line each, like the reference. */
+.ai-suggestions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: 1fr;
+  gap: 10px;
+}
+
+.ai-suggestion,
+.ai-connect {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--ai-line);
+  background: var(--ai-card);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+  animation: fade-up var(--dur-snappy, 0.45s) var(--ai-snappy) backwards;
+  animation-delay: calc(var(--i, 0) * 40ms);
+  transition:
+    var(--press-transition, scale 0.3s),
+    background-color 0.2s;
+}
+.ai-suggestion {
+  justify-content: center;
+  min-width: 0;
+  min-height: 48px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  text-align: center;
+}
+.ai-suggestion > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-connect {
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 7%, transparent);
+  animation-delay: 80ms;
+}
+.ai-connect-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.ai-connect-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ai-connect-text strong {
+  font-size: 15px;
+  font-weight: 650;
+}
+.ai-connect-text span {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+.ai-connect-chev {
+  color: var(--text-faint);
+  flex: none;
+}
+
+/* Press feel on everything tappable here comes from the shared press scale
+   (base.css); each transition list carries var(--press-transition) so the
+   release springs. One mechanism, so presses never stack. */
+
+@media (hover: hover) {
+  .ai-suggestion:hover,
+  .ai-connect:hover {
+    background: color-mix(in srgb, var(--ai-card) 92%, var(--text) 4%);
+  }
+}
+
+/* ---------------------------------------------------------------- messages */
+
+.ai-row {
+  display: flex;
+  min-width: 0;
+}
+
+.ai-row.is-user {
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.ai-bubble {
+  max-width: 80%;
+  padding: 10px 15px;
+  border-radius: 20px;
+  background: var(--card-fill, var(--bg-subtle));
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  transform-origin: 100% 100%;
+  animation: ai-bubble-in var(--dur-bouncy, 0.7s) var(--ai-bouncy) backwards;
+}
+
+.ai-time {
+  margin-top: 5px;
+  padding: 0 6px;
+  font-size: 11px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.ai-sent-context {
+  max-width: 80%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.ai-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 220px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--ai-line);
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-context-note {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ai-row.is-assistant {
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.ai-avatar {
+  flex: none;
+  padding-top: 6px;
+  animation: pop-in var(--dur-bouncy, 0.7s) var(--ai-bouncy) backwards;
+}
+
+.ai-answer-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-answer {
+  padding: 12px 16px;
+  border-radius: 8px 20px 20px 20px;
+  border: 1px solid var(--ai-line);
+  background: var(--ai-card);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transform-origin: 0 0;
+  animation: ai-card-in var(--dur-bouncy, 0.7s) var(--ai-bouncy) backwards;
+}
+.ai-answer.is-error {
+  border-color: color-mix(in srgb, var(--danger) 28%, var(--ai-line));
+}
+
+.ai-answer-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-top: 4px;
+  animation: fade-in 0.3s ease backwards;
+}
+.ai-answer-meta .ai-time {
+  margin: 0;
+}
+.ai-answer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.ai-mini-btn,
+.ai-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    var(--press-transition, scale 0.3s),
+    background-color 0.2s,
+    color 0.2s;
+}
+.ai-chip-btn {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--ai-line);
+  background: var(--ai-card);
+  color: var(--text);
+  font-size: 13px;
+}
+@media (hover: hover) {
+  .ai-mini-btn:hover,
+  .ai-chip-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+  }
+}
+@media (pointer: coarse) {
+  .ai-mini-btn,
+  .ai-chip-btn {
+    height: 44px;
+  }
+}
+
+.ai-thinking {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  font-size: 14px;
+}
+.ai-thinking > span:first-child {
+  background: linear-gradient(90deg, var(--text-faint) 20%, var(--text) 50%, var(--text-faint) 80%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: ai-shimmer 1.6s linear infinite;
+}
+.ai-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+.ai-dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: ai-hop 1.1s var(--ai-bouncy) infinite;
+}
+.ai-dots i:nth-child(2) {
+  animation-delay: 0.14s;
+}
+.ai-dots i:nth-child(3) {
+  animation-delay: 0.28s;
+}
+
+.ai-flag {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ai-error {
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.ai-error > svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--danger);
+}
+.ai-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.ai-error-actions:empty {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- markdown */
+
+.ai-md {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-body, var(--text));
+  overflow-wrap: anywhere;
+}
+.ai-md > :first-child {
+  margin-top: 0;
+}
+.ai-md > :last-child {
+  margin-bottom: 0;
+}
+.ai-md p,
+.ai-md ul,
+.ai-md ol,
+.ai-md blockquote,
+.ai-md pre,
+.ai-md .ai-table {
+  margin: 0 0 0.7em;
+}
+.ai-md h3,
+.ai-md h4,
+.ai-md h5 {
+  margin: 1em 0 0.35em;
+  color: var(--text);
+  line-height: 1.3;
+  letter-spacing: -0.012em;
+}
+.ai-md h3 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.ai-md h4 {
+  font-size: 16px;
+  font-weight: 650;
+}
+.ai-md h5 {
+  font-size: 15px;
+  font-weight: 600;
+}
+.ai-md strong {
+  color: var(--text);
+  font-weight: 650;
+}
+.ai-md ul,
+.ai-md ol {
+  padding-left: 1.35em;
+}
+.ai-md li {
+  margin: 0.2em 0;
+}
+.ai-md li::marker {
+  color: var(--text-faint);
+}
+.ai-md li > p {
+  margin: 0;
+}
+.ai-md li.is-task {
+  position: relative;
+  list-style: none;
+  margin-left: -1.35em;
+  padding-left: 1.75em;
+}
+.ai-task-box {
+  position: absolute;
+  left: 0;
+  top: 0.22em;
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1.5px solid var(--border-strong);
+}
+.ai-md li.is-checked {
+  color: var(--accent);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--accent) 60%, transparent);
+}
+.ai-md li.is-checked > .ai-task-box {
+  border-color: transparent;
+  background: var(--accent-soft);
+}
+.ai-md li.is-checked > .ai-task-box::after {
+  content: '';
+  position: absolute;
+  left: 5.5px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--accent);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.ai-md code {
+  padding: 0.1em 0.35em;
+  border-radius: 5px;
+  background: var(--code-bg);
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+.ai-md pre {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--bg-subtle);
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ai-md pre code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+}
+.ai-md blockquote {
+  padding: 2px 0 2px 12px;
+  border-left: 3px solid var(--border-strong);
+  color: var(--text-secondary);
+}
+.ai-md a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.ai-md a:hover {
+  text-decoration: underline;
+}
+.ai-md hr {
+  margin: 1em 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+.ai-table {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.ai-md table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.ai-md th,
+.ai-md td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+.ai-md th {
+  font-weight: 600;
+  background: var(--bg-subtle);
+}
+.ai-md tr:last-child td {
+  border-bottom: 0;
+}
+.ai-wikilink {
+  padding: 0 0.3em;
+  border: 0;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* While streaming: new blocks fade in, and a soft dot rides the end of the text. */
+.ai-row.is-streaming .ai-md > * {
+  animation: ai-fade 0.45s var(--ease-out, ease-out) backwards;
+}
+.ai-row.is-streaming .ai-md > :is(p, h3, h4, h5):last-child::after,
+.ai-row.is-streaming .ai-md > :is(ul, ol):last-child > li:last-child::after {
+  content: '';
+  display: inline-block;
+  width: 0.5em;
+  height: 0.5em;
+  margin-left: 0.3em;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: 0.05em;
+  animation: ai-blink 1s ease-in-out infinite;
+}
+
+/* -------------------------------------------------------------------- dock */
+
+.ai-dock {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px calc(12px + var(--safe-right)) calc(10px + var(--safe-bottom)) calc(12px + var(--safe-left));
+}
+.ai-dock > .ai-composer-wrap {
+  width: 100%;
+  max-width: 760px;
+}
+.ai-dock-glow {
+  z-index: -1;
+}
+
+.ai-regenerate {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  margin-bottom: 10px;
+  padding: 0 16px 0 5px;
+  border: 0;
+  border-radius: 999px;
+  /* Dark tinted glass: still the black pill, but the conversation it floats
+     over shows through softly. */
+  background: color-mix(in srgb, var(--text) 86%, transparent);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  color: var(--bg);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow:
+    0 0 0 0.5px var(--glass-rim, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 8px 24px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  animation: ai-pill-in var(--dur-bouncy, 0.7s) var(--ai-bouncy) 0.15s backwards;
+  transition: var(--press-transition, scale 0.3s);
+}
+.ai-regenerate-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.ai-composer-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-chips {
+  display: flex;
+  gap: 6px;
+  padding: 0 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ai-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.ai-ctx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  max-width: 100%;
+  height: 32px;
+  padding: 0 3px 0 11px;
+  border-radius: 999px;
+  border: 1px solid var(--ai-line);
+  background: var(--glass-bg, var(--bg-elevated));
+  -webkit-backdrop-filter: var(--glass-blur, none);
+  backdrop-filter: var(--glass-blur, none);
+  font-size: 13px;
+  color: var(--text);
+  animation: pop-in var(--dur-bouncy, 0.7s) var(--ai-bouncy) backwards;
+}
+.ai-ctx-chip > svg {
+  flex: none;
+  color: var(--text-secondary);
+}
+.ai-ctx-chip.is-accent {
+  border-color: transparent;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.ai-ctx-chip.is-accent > svg {
+  color: var(--accent);
+}
+.ai-ctx-chip.is-locked {
+  color: var(--text-secondary);
+}
+.ai-ctx-label {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ai-ctx-note {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.ai-ctx-chip button {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  opacity: 0.7;
+  cursor: pointer;
+}
+.ai-ctx-chip button:hover {
+  background: var(--bg-hover);
+  opacity: 1;
+}
+/* Phones: the × stays 26px to look at but takes taps over 44px. The chip row
+   scrolls sideways, which also clips up and down, so it gets 6px of room above
+   and below (given back with a negative margin) for the bigger hit area. */
+@media (pointer: coarse) {
+  .ai-chips {
+    padding-block: 6px;
+    margin-block: -6px;
+  }
+  .ai-ctx-chip button {
+    position: relative;
+  }
+  .ai-ctx-chip button::after {
+    content: '';
+    position: absolute;
+    inset: -9px;
+    border-radius: 50%;
+  }
+}
+
+.ai-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  min-height: 52px;
+  padding: 6px;
+  border-radius: 26px;
+  transition: outline-color 0.2s;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.ai-composer:focus-within {
+  outline-color: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+/* On a phone the raised keyboard already says where you're typing. */
+@media (pointer: coarse) {
+  .ai-composer:focus-within {
+    outline-color: transparent;
+  }
+}
+
+.ai-composer-btn,
+.ai-send {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    var(--press-transition, scale 0.3s),
+    background-color 0.25s,
+    color 0.25s;
+}
+@media (hover: hover) {
+  .ai-composer-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+  }
+}
+.ai-send {
+  background: var(--bg-active);
+  color: var(--text-faint);
+  cursor: default;
+}
+/* Empty box: quiet, but still visibly a button (not faded twice). */
+.ai-send:disabled {
+  opacity: 1;
+  color: var(--text-secondary);
+}
+.ai-send.is-ready {
+  background: var(--accent);
+  color: var(--accent-text, #fff);
+  cursor: pointer;
+  animation: ai-pop 0.5s var(--ai-bouncy);
+}
+.ai-send.is-stop {
+  background: var(--text);
+  color: var(--bg);
+  cursor: pointer;
+  animation: ai-pop 0.5s var(--ai-bouncy);
+}
+.ai-composer-btn:focus-visible,
+.ai-send:focus-visible,
+.ai-suggestion:focus-visible,
+.ai-regenerate:focus-visible,
+.ai-mini-btn:focus-visible,
+.ai-chip-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ai-input {
+  flex: 1;
+  min-width: 0;
+  max-height: 168px;
+  padding: 9px 4px;
+  border: 0;
+  outline: 0;
+  resize: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  /* 16px keeps iOS from zooming the page when the box gets focus. */
+  font-size: 16px;
+  line-height: 22px;
+}
+.ai-input::placeholder {
+  color: var(--text-faint);
+}
+
+/* ----------------------------------------------------- sheets and consent */
+
+.ai-history-list,
+.ai-picker-list {
+  flex: 1;
+  min-height: 0;
+  list-style: none;
+  margin: 0;
+  padding: 6px 8px 8px;
+  overflow-y: auto;
+}
+.ai-history-list li {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: 14px;
+  animation: fade-up var(--dur-snappy, 0.45s) var(--spring-snappy, ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), 10) * 30ms);
+}
+.ai-history-list li.is-current {
+  background: var(--bg-active);
+}
+.ai-history-item,
+.ai-picker-item {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: var(--press-transition, scale 0.3s);
+}
+.ai-history-item > svg,
+.ai-picker-item > svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--text-secondary);
+}
+@media (hover: hover) {
+  .ai-history-item:hover,
+  .ai-picker-item:not(:disabled):hover {
+    background: var(--bg-hover);
+  }
+}
+.ai-history-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ai-history-title,
+.ai-history-sub,
+.ai-picker-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ai-history-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+.ai-history-sub {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+.ai-history-delete {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+.ai-history-delete:hover {
+  color: var(--danger);
+}
+.ai-history-empty,
+.ai-history-foot {
+  margin: 0;
+  padding: 12px 20px 16px;
+}
+
+.ai-picker-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px 4px;
+  color: var(--text-secondary);
+}
+.ai-picker-search .input {
+  flex: 1;
+}
+.ai-picker-item {
+  align-items: center;
+}
+.ai-picker-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ai-picker-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+}
+.ai-picker-folder {
+  flex: none;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.ai-picker-empty {
+  padding: 16px 10px;
+}
+
+.ai-consent-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 20px 20px;
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+/* It takes focus when the prompt opens (so Enter can't press Allow); no ring for that. */
+.ai-consent-body:focus {
+  outline: none;
+}
+.ai-consent-body p {
+  margin: 0;
+}
+.ai-consent-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  animation: pop-in var(--dur-bouncy, 0.7s) var(--spring-bouncy, ease-out) backwards;
+}
+.ai-consent-points {
+  margin: 0;
+  padding-left: 1.2em;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ai-consent-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+@media (max-width: 760px) {
+  .ai-consent-actions > .btn {
+    flex: 1;
+    min-height: 44px;
+  }
+}
+
+/* --------------------------------------------------------- Settings → AI */
+
+.ai-provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+.ai-provider {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 56px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--card-border, var(--border));
+  background: var(--card-bg, var(--bg));
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  animation: fade-up var(--dur-snappy, 0.45s) var(--spring-snappy, ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 30ms);
+  transition:
+    var(--press-transition, scale 0.3s),
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+.ai-provider.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.ai-provider-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+.ai-provider-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.ai-provider-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text, #fff);
+  animation: pop-in var(--dur-bouncy, 0.7s) var(--spring-bouncy, ease-out) backwards;
+}
+
+.ai-key-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ai-key-row .input {
+  flex: 1;
+  min-width: 0;
+}
+.ai-get-key {
+  margin-left: 8px;
+  font-weight: 500;
+}
+.ai-key-saved {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-subtle);
+}
+.ai-key-saved > svg {
+  color: var(--ok);
+}
+.ai-key-saved > span {
+  flex: 1;
+  min-width: 160px;
+}
+.ai-base-url code {
+  overflow-wrap: anywhere;
+}
+.ai-test-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.ai-test-result {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  animation: fade-up 0.35s var(--spring-snappy, ease-out) backwards;
+}
+.ai-test-result.is-ok {
+  color: var(--ok);
+}
+.ai-test-result.is-error {
+  color: var(--danger);
+}
+.ai-consent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ai-consent-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.ai-consent-list li > svg {
+  color: var(--ok);
+}
+.ai-consent-list li > span {
+  flex: 1;
+}
+.ai-privacy {
+  display: flex;
+  gap: 10px;
+}
+.ai-privacy > svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--accent);
+}
+
+/* -------------------------------------------------------------- keyframes */
+
+@keyframes ai-bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.92);
+  }
+}
+@keyframes ai-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+}
+@keyframes ai-pill-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.85);
+  }
+}
+@keyframes ai-pop {
+  from {
+    transform: scale(0.7);
+  }
+}
+@keyframes ai-fade {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+@keyframes ai-blink {
+  50% {
+    opacity: 0.25;
+    transform: scale(0.7);
+  }
+}
+@keyframes ai-hop {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+@keyframes ai-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* -------------------------------------------------------------- responsive */
+
+@media (min-width: 761px) {
+  .ai-head {
+    padding-top: calc(12px + var(--safe-top));
+  }
+  .ai-landing {
+    gap: 24px;
+  }
+  .ai-hello {
+    font-size: 34px;
+  }
+  .ai-dock {
+    padding-bottom: calc(18px + var(--safe-bottom));
+  }
+}
+
+/* Short screens (small phones, a phone with the keyboard up): a smaller hero. */
+@media (max-height: 720px) {
+  .ai-hero-orb {
+    scale: 0.72;
+    margin: 12px 0 -14px;
+  }
+  .ai-hello {
+    font-size: 26px;
+  }
+}
+
+@media (max-width: 380px) {
+  .ai-suggestion {
+    padding: 10px 8px;
+    font-size: 13.5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-page *,
+  .ai-page *::before,
+  .ai-page *::after {
+    animation: none !important;
+  }
+}
