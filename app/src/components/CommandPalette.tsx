@@ -1,6 +1,7 @@
 import { Command } from 'cmdk'
-import { CalendarDays, FilePlus, FileText, House, LayoutTemplate, ListTodo, Lock, Moon, Network, PanelLeft, RefreshCw, Search, Settings, Sun, Table2, Trash } from 'lucide-react'
+import { CalendarDays, FilePlus, FileText, House, LayoutTemplate, ListTodo, Lock, Moon, Network, PanelLeft, RefreshCw, Search, Settings, Sparkles, Sun, Table2, Trash } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { openAi } from '../lib/ai/store'
 import { lockNow, useLock } from '../lib/crypto'
 import { useNoteIcons } from '../lib/hooks'
 import { NoteIcon } from './NoteIcon'
@@ -42,6 +43,7 @@ export function CommandPalette() {
   const commands: Cmd[] = useMemo(
     () => [
       { id: 'new', label: 'New page', icon: <FilePlus size={16} />, hint: `${mod}N`, run: () => newNoteIn(''), keywords: 'create add note' },
+      { id: 'ai', label: 'Ask Slate', icon: <Sparkles size={16} />, run: () => openAi(), keywords: 'ai chat assistant claude chatgpt gemini' },
       { id: 'calendar', label: 'Open calendar', icon: <CalendarDays size={16} />, run: () => openCalendar(), keywords: 'calendar event google schedule month' },
       { id: 'today', label: 'Open today’s note', icon: <CalendarDays size={16} />, run: () => openNote(openDailyNote()), keywords: 'daily journal date' },
       { id: 'tasks', label: 'Open tasks', icon: <ListTodo size={16} />, run: () => navigate({ name: 'tasks' }), keywords: 'todo to-do checklist due overdue' },
@@ -92,7 +94,7 @@ export function CommandPalette() {
 
   return (
     <div className="modal-backdrop palette-backdrop" onMouseDown={(e) => e.target === e.currentTarget && close()}>
-      <Command className="palette" shouldFilter={false} loop label="Search">
+      <Command className="palette glass" shouldFilter={false} loop label="Search">
         <div className="palette-input">
           <Search size={18} />
           <Command.Input
@@ -154,7 +156,9 @@ export function CommandPalette() {
           )}
           {ql && !exact && (
             <Command.Group heading="Create">
-              <Command.Item value="create" onSelect={() => run(() => openNote(createNote({ title: q.trim() })))} className="palette-item">
+              {/* Instant, as in newNoteIn: the new page focuses its title, which only
+                  raises the iPhone keyboard while still inside the tap. */}
+              <Command.Item value="create" onSelect={() => run(() => openNote(createNote({ title: q.trim() }), { instant: true }))} className="palette-item">
                 <span className="palette-icon">
                   <FilePlus size={16} />
                 </span>

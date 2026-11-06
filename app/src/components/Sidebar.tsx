@@ -13,6 +13,7 @@ import {
   Trash,
 } from 'lucide-react'
 import { useMemo, useRef } from 'react'
+import { openAi } from '../lib/ai/store'
 import { isoDay } from '../lib/calendar'
 import { useIsMobile, useNoteIcons } from '../lib/hooks'
 import { NoteIcon } from './NoteIcon'
@@ -23,6 +24,7 @@ import { useTasks } from '../lib/taskIndex'
 import { bucketOf } from '../lib/tasks'
 import { createFolder, useVault } from '../lib/vault'
 import { FileTree, newNoteIn, noteMenu } from './FileTree'
+import { Orb } from './Orb'
 import { SyncIndicator } from './SyncIndicator'
 import { Kbd, Logo, mod, openMenu } from './ui'
 import { openCalendar, useUI } from './uiState'
@@ -107,6 +109,7 @@ export function Sidebar() {
       <nav className="sidebar-nav">
         <NavItem icon={<Search size={17} />} label="Search" hint={mobile ? undefined : `${mod}K`} onClick={go(() => useUI.setState({ palette: 'search' }))} />
         <NavItem icon={<House size={17} />} label="Home" active={route.name === 'home'} onClick={go(() => navigate({ name: 'home' }))} />
+        <NavItem icon={<Orb size={17} />} label="Ask Slate" active={route.name === 'ai'} onClick={go(() => openAi())} />
         <NavItem icon={<CalendarDays size={17} />} label="Calendar" onClick={go(() => openCalendar())} />
         <NavItem icon={<ListTodo size={17} />} label="Tasks" active={route.name === 'tasks'} badge={dueCount} onClick={go(() => navigate({ name: 'tasks' }))} />
         <NavItem icon={<Network size={17} />} label="Graph" active={route.name === 'graph'} onClick={go(() => navigate({ name: 'graph' }))} />

@@ -1,4 +1,4 @@
-import { CalendarClock, CircleCheckBig, ListTodo, X } from 'lucide-react'
+import { CalendarClock, CircleCheckBig, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { isoDay } from '../lib/calendar'
 import { titleOf } from '../lib/paths'
@@ -45,10 +45,14 @@ function setDue(task: Task, due: string | null) {
   updateContent(task.path, next)
 }
 
-export function TaskRow({ task, today, showNote = true }: { task: Task; today: string; showNote?: boolean }) {
+/** One to-do. Pass `index` to have it rise into place after the ones above it. */
+export function TaskRow({ task, today, showNote = true, index }: { task: Task; today: string; showNote?: boolean; index?: number }) {
   const bucket = bucketOf(task, today)
   return (
-    <div className={'task-row' + (task.done ? ' is-done' : '')}>
+    <div
+      className={'task-row' + (task.done ? ' is-done' : '') + (index === undefined ? '' : ' stagger-item')}
+      style={index === undefined ? undefined : ({ '--i': index } as React.CSSProperties)}
+    >
       <input type="checkbox" className="task-check" checked={task.done} onChange={(e) => toggleTask(task, e.target.checked)} aria-label={task.text} />
       <span className="task-text">{plainText(task.text)}</span>
       {task.due && (
@@ -100,10 +104,8 @@ export function TasksPage() {
   return (
     <div className="page tasks-page">
       <div className="page-inner">
-        <h1 className="page-heading">
-          <ListTodo size={26} strokeWidth={1.75} /> Tasks
-        </h1>
-        <p className="muted">
+        <h1 className="page-heading">Tasks</h1>
+        <p className="muted page-lede">
           Every to-do from every page. Add a due date by typing <code>📅 2026-10-20</code> (or <code>due 2026-10-20</code>) after a task, or with
           the calendar button here. To-dos in a daily note are due that day.
         </p>
@@ -123,18 +125,22 @@ export function TasksPage() {
           ))}
         </div>
         {visible.length === 0 ? (
-          <div className="empty-inline">
-            <CircleCheckBig size={18} /> {tasks.length ? 'Nothing here — nice.' : 'No to-dos yet. Type [] at the start of a line in any page to make one.'}
+          <div className="empty-card">
+            <CircleCheckBig size={30} strokeWidth={1.75} />
+            <strong>{tasks.length ? 'Nothing here — nice.' : 'No to-dos yet'}</strong>
+            {!tasks.length && <span>Type [] at the start of a line in any page to make one.</span>}
           </div>
         ) : (
           visible.map((g) => (
             <section key={g.id} className="task-group">
-              <h2 className={'home-section task-group-' + g.id}>
-                {g.label} <span className="muted">{count(g.id)}</span>
+              <h2 className={'group-head task-group-' + g.id}>
+                {g.label} <span className="group-count">{count(g.id)}</span>
               </h2>
-              {grouped.get(g.id)!.slice(0, g.id === 'done' ? 100 : undefined).map((t) => (
-                <TaskRow key={t.path + ':' + t.line} task={t} today={today} />
-              ))}
+              <div className="group is-flush">
+                {grouped.get(g.id)!.slice(0, g.id === 'done' ? 100 : undefined).map((t, i) => (
+                  <TaskRow key={t.path + ':' + t.line} task={t} today={today} index={i} />
+                ))}
+              </div>
             </section>
           ))
         )}

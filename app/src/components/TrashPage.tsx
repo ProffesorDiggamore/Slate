@@ -12,16 +12,19 @@ export function TrashPage() {
         <h1 className="page-heading">
           <Trash size={26} strokeWidth={1.75} /> Trash
         </h1>
-        <p className="muted">
+        <p className="muted page-lede">
           Deleted pages stay here on this device until you remove them. Older versions are also kept in your GitHub history.
         </p>
         {trash.length === 0 ? (
-          <div className="empty-inline">Trash is empty.</div>
+          <div className="empty-card">
+            <Trash size={30} strokeWidth={1.75} />
+            <strong>Trash is empty</strong>
+          </div>
         ) : (
           <>
             <div className="list">
-              {trash.map((t) => (
-                <div key={t.id} className="list-row is-static">
+              {trash.map((t, i) => (
+                <div key={t.id} className="list-row is-static stagger-item" style={{ '--i': i } as React.CSSProperties}>
                   <span className="list-icon">
                     <FileText size={16} strokeWidth={1.75} />
                   </span>

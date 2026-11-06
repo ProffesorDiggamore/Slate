@@ -1,4 +1,6 @@
+import { registerPlugin } from '@capacitor/core'
 import { unlock } from './crypto'
+import { isNativeApp } from './native'
 
 // Face ID / Touch ID / device-passcode unlock for encrypted pages.
 //
@@ -9,6 +11,20 @@ import { unlock } from './crypto'
 // Needs iOS / macOS 18+ (Safari) or a browser with passkey PRF support.
 
 const KEY = 'cairn.faceid.v1'
+
+// In the App Store app there's no web address to tie a passkey to, so the
+// passphrase goes in the iOS Keychain instead, readable only after Face ID,
+// Touch ID or the device passcode, and never backed up or synced off the
+// device (ios/App/App/SlateBiometric.swift).
+const NATIVE_KEY = 'cairn.faceid.native'
+interface NativeBiometric {
+  available(): Promise<{ available: boolean; kind: 'faceID' | 'touchID' | 'opticID' | 'passcode' | 'none' }>
+  save(o: { secret: string }): Promise<void>
+  load(o: { reason: string }): Promise<{ secret: string }>
+  remove(): Promise<void>
+}
+const native = isNativeApp ? registerPlugin<NativeBiometric>('SlateBiometric') : null
+let nativeKind: string | null = null
 
 interface Saved {
   cred: string // credential id
@@ -31,11 +47,16 @@ function saved(): Saved | null {
   }
 }
 
-export const faceIdEnrolled = () => !!saved()
+export const faceIdEnrolled = () => (native ? localStorage.getItem(NATIVE_KEY) === '1' : !!saved())
 
 /** True when this device has a built-in authenticator (Face ID, Touch ID, Windows Hello, passcode). */
 export async function faceIdAvailable(): Promise<boolean> {
   try {
+    if (native) {
+      const r = await native.available()
+      nativeKind = r.kind
+      return r.available
+    }
     return !!window.PublicKeyCredential && (await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())
   } catch {
     return false
@@ -70,6 +91,11 @@ async function aesKey(secret: ArrayBuffer): Promise<CryptoKey> {
 
 /** Turns on Face ID unlock for this device. Call straight from a tap — the OS prompt needs one. */
 export async function enrollFaceId(passphrase: string): Promise<void> {
+  if (native) {
+    await native.save({ secret: passphrase })
+    localStorage.setItem(NATIVE_KEY, '1')
+    return
+  }
   const salt = random(32)
   const created = (await navigator.credentials.create({
     publicKey: {
@@ -97,6 +123,11 @@ export async function enrollFaceId(passphrase: string): Promise<void> {
 
 /** Unlocks encrypted pages with Face ID / Touch ID / passcode. Call straight from a tap. */
 export async function unlockWithFaceId(sample?: string): Promise<void> {
+  if (native) {
+    const { secret } = await native.load({ reason: 'Unlock your encrypted pages' })
+    await unlock(secret, sample)
+    return
+  }
   const s = saved()
   if (!s) throw new Error(`${capitalised(faceIdName())} unlock isn’t set up on this device.`)
   const secret = await prfSecret(fromB64(s.cred), fromB64(s.salt))
@@ -111,7 +142,9 @@ export async function unlockWithFaceId(sample?: string): Promise<void> {
 }
 
 export function forgetFaceId() {
+  if (native) void native.remove().catch(() => {})
   try {
+    localStorage.removeItem(NATIVE_KEY)
     localStorage.removeItem(KEY)
   } catch {
     /* ignore */
@@ -120,12 +153,16 @@ export function forgetFaceId() {
 
 /** A friendly reason for a failed prompt, or null when the person just cancelled. */
 export function faceIdError(e: unknown): string | null {
+  if (native && (e as { code?: string } | null)?.code === 'CANCELLED') return null
   if (e instanceof DOMException && (e.name === 'NotAllowedError' || e.name === 'AbortError')) return null
   return e instanceof Error ? e.message : String(e)
 }
 
 /** What to call it on this device. */
 export function faceIdName(): string {
+  if (nativeKind === 'touchID') return 'Touch ID'
+  if (nativeKind === 'opticID') return 'Optic ID'
+  if (nativeKind === 'passcode') return 'your passcode'
   const ua = navigator.userAgent
   if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'Face ID'
   if (/Macintosh/.test(ua)) return 'Touch ID'

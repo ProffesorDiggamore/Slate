@@ -1,4 +1,5 @@
-// Apply the theme before first paint so there's no flash.
+// Apply the theme before first paint so there's no flash. Mirrors App.tsx and
+// settings.ts (default accent, the old default's migration, the dark-mode lift).
 try {
   var s = JSON.parse(localStorage.getItem('cairn.settings.v1') || '{}')
   var t = s.theme || 'system'
@@ -6,8 +7,9 @@ try {
   var r = document.documentElement
   r.dataset.theme = t
   r.dataset.palette = s.palette || 'default'
-  if (s.accent) {
+  var a = typeof s.accent === 'string' ? s.accent.toLowerCase() : ''
+  if (a && a !== '#2383e2' && a !== '#2f6bff') {
     r.dataset.accent = ''
-    r.style.setProperty('--accent', s.accent)
+    r.style.setProperty('--accent', t === 'dark' ? 'color-mix(in srgb, ' + a + ' 84%, white)' : a)
   }
 } catch (e) {}

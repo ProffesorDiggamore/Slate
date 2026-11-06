@@ -1,32 +1,51 @@
 /* ================================================================ THEMES */
 /* Accent colour: one variable from Settings, everything else derived. */
 
+/* App.tsx writes --accent inline (a lighter mix of it in dark mode); the rest
+   follows from it. */
 :root[data-accent] {
   --accent-hover: color-mix(in srgb, var(--accent) 86%, black);
-  --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
-  --selection: color-mix(in srgb, var(--accent) 24%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --selection: color-mix(in srgb, var(--accent) 22%, transparent);
   --wikilink: color-mix(in srgb, var(--accent) 82%, var(--text));
 }
 
 :root[data-accent][data-theme='dark'] {
-  --accent-hover: color-mix(in srgb, var(--accent) 80%, white);
+  --accent-hover: color-mix(in srgb, var(--accent) 82%, white);
   --accent-soft: color-mix(in srgb, var(--accent) 22%, transparent);
-  --selection: color-mix(in srgb, var(--accent) 38%, transparent);
-  --wikilink: color-mix(in srgb, var(--accent) 70%, white);
+  --selection: color-mix(in srgb, var(--accent) 36%, transparent);
+  --wikilink: color-mix(in srgb, var(--accent) 72%, white);
 }
 
 /* Palettes tint the paper. Each has a light and a dark version. */
 
+/* Everything newer derives from each palette's paper so cards, body text and
+   glass pick up its tint. It comes first so a palette below can still pin a
+   value (card-bg in dark, card-fill in light). */
+:root[data-palette]:not([data-palette='default']) {
+  --bg-grouped: var(--bg-sidebar);
+  --bg-cell: var(--bg-elevated);
+  --card-bg: var(--bg-elevated);
+  --card-fill: var(--bg-subtle);
+  --card-border: color-mix(in srgb, var(--text) 8%, transparent);
+  --circle-bg: var(--bg-elevated);
+  --circle-border: color-mix(in srgb, var(--text) 12%, transparent);
+  --text-body: color-mix(in srgb, var(--text) 78%, var(--bg));
+  --glass-bg: color-mix(in srgb, var(--bg-elevated) 58%, transparent);
+  --glass-bg-strong: color-mix(in srgb, var(--bg-elevated) 84%, transparent);
+}
+
 :root[data-palette='paper'][data-theme='light'] {
   --bg: #fbf8f1;
-  --bg-sidebar: #f3eee3;
+  --bg-sidebar: #f4efe4;
   --bg-elevated: #fffdf8;
   --bg-subtle: #f2ecdf;
   --text: #3b3428;
   --text-secondary: rgba(59, 52, 40, 0.68);
-  --text-faint: rgba(59, 52, 40, 0.42);
+  --text-faint: rgba(59, 52, 40, 0.5);
   --border: rgba(59, 52, 40, 0.1);
   --border-strong: rgba(59, 52, 40, 0.18);
+  --card-fill: #f4eee2;
 }
 :root[data-palette='paper'][data-theme='dark'] {
   --bg: #1f1b16;
@@ -35,7 +54,8 @@
   --bg-subtle: #29231c;
   --text: rgba(255, 244, 226, 0.86);
   --text-secondary: rgba(255, 244, 226, 0.55);
-  --text-faint: rgba(255, 244, 226, 0.32);
+  --text-faint: rgba(255, 244, 226, 0.46);
+  --card-bg: #251f19;
 }
 
 :root[data-palette='slate'][data-theme='light'] {
@@ -45,7 +65,8 @@
   --bg-subtle: #eef2f6;
   --text: #253041;
   --text-secondary: rgba(37, 48, 65, 0.68);
-  --text-faint: rgba(37, 48, 65, 0.42);
+  --text-faint: rgba(37, 48, 65, 0.5);
+  --card-fill: #eff3f7;
 }
 :root[data-palette='slate'][data-theme='dark'] {
   --bg: #151a21;
@@ -54,7 +75,8 @@
   --bg-subtle: #1e2530;
   --text: #e3e9f1;
   --text-secondary: rgba(227, 233, 241, 0.58);
-  --text-faint: rgba(227, 233, 241, 0.34);
+  --text-faint: rgba(227, 233, 241, 0.46);
+  --card-bg: #1a2029;
 }
 
 :root[data-palette='forest'][data-theme='light'] {
@@ -64,7 +86,8 @@
   --bg-subtle: #ebf2ea;
   --text: #24352a;
   --text-secondary: rgba(36, 53, 42, 0.68);
-  --text-faint: rgba(36, 53, 42, 0.42);
+  --text-faint: rgba(36, 53, 42, 0.5);
+  --card-fill: #edf3ec;
 }
 :root[data-palette='forest'][data-theme='dark'] {
   --bg: #131b16;
@@ -73,7 +96,8 @@
   --bg-subtle: #1b261f;
   --text: #e2ede5;
   --text-secondary: rgba(226, 237, 229, 0.56);
-  --text-faint: rgba(226, 237, 229, 0.32);
+  --text-faint: rgba(226, 237, 229, 0.46);
+  --card-bg: #18221c;
 }
 
 :root[data-palette='rose'][data-theme='light'] {
@@ -83,7 +107,8 @@
   --bg-subtle: #f7ecee;
   --text: #3d2a30;
   --text-secondary: rgba(61, 42, 48, 0.68);
-  --text-faint: rgba(61, 42, 48, 0.42);
+  --text-faint: rgba(61, 42, 48, 0.5);
+  --card-fill: #f8eef0;
 }
 :root[data-palette='rose'][data-theme='dark'] {
   --bg: #1c1518;
@@ -92,7 +117,8 @@
   --bg-subtle: #261d21;
   --text: #f3e6ea;
   --text-secondary: rgba(243, 230, 234, 0.56);
-  --text-faint: rgba(243, 230, 234, 0.32);
+  --text-faint: rgba(243, 230, 234, 0.46);
+  --card-bg: #22191d;
 }
 
 :root[data-palette='oled'][data-theme='dark'] {
@@ -100,6 +126,10 @@
   --bg-sidebar: #080808;
   --bg-elevated: #141414;
   --bg-subtle: #0c0c0c;
+  --card-bg: #0a0a0a;
+  --card-fill: #111111;
+  --glass-bg: rgba(20, 20, 22, 0.55);
+  --glass-bg-strong: rgba(20, 20, 22, 0.86);
 }
 
 /* Text size, spacing and page width. */
@@ -249,6 +279,13 @@
 }
 
 /* ============================================================ PAGE ICONS */
+
+/* Browsers draw colour emoji with the text colour's transparency, so an emoji
+   inside grey (semi-transparent) text came out washed out. Give it solid text. */
+.note-emoji {
+  color: CanvasText;
+}
+
 
 .custom-icon {
   display: inline-grid;
@@ -493,11 +530,15 @@
 }
 .cal-day {
   position: relative;
-  height: 38px;
-  border-radius: 8px;
-  font-size: 13px;
+  height: 40px;
+  border-radius: 12px;
+  font-size: 13.5px;
   color: var(--text);
   font-variant-numeric: tabular-nums;
+  transition:
+    background 0.18s,
+    color 0.18s,
+    var(--press-transition);
 }
 .cal-day:hover {
   background: var(--bg-hover);
@@ -509,9 +550,12 @@
   color: var(--accent);
   font-weight: 700;
 }
+/* The picked day pops in as a solid accent tile. */
 .cal-day.is-selected {
   background: var(--accent);
   color: var(--accent-text);
+  font-weight: 650;
+  animation: check-pop var(--dur-bouncy) var(--spring-bouncy);
 }
 .cal-dot {
   position: absolute;
@@ -568,8 +612,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 6px;
-  border-radius: 6px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  animation: fade-up var(--dur-snappy) var(--spring-snappy) both;
 }
 .cal-items li:hover {
   background: var(--bg-hover);
@@ -595,9 +640,10 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 14px;
-  border-radius: var(--radius-lg);
-  background: var(--bg-subtle);
+  padding: 16px;
+  border-radius: var(--radius-card);
+  background: var(--card-fill);
+  animation: fade-up var(--dur-snappy) var(--spring-snappy) both;
 }
 .cal-form-title {
   font-weight: 650;
@@ -659,14 +705,18 @@
 }
 .accent-dot {
   position: relative;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+  transition:
+    outline-offset 0.4s var(--spring-bouncy),
+    var(--press-transition);
 }
 .accent-dot.is-active {
   outline: 2px solid var(--text);
-  outline-offset: 2px;
+  outline-offset: 3px;
+  animation: check-pop var(--dur-bouncy) var(--spring-bouncy);
 }
 .accent-dot input {
   position: absolute;
@@ -684,11 +734,14 @@
   flex-direction: column;
   gap: 6px;
   padding: 8px;
-  border-radius: 10px;
+  border-radius: 14px;
   box-shadow: inset 0 0 0 1px var(--border);
   font-size: 12px;
   color: var(--text-secondary);
   text-align: left;
+  transition:
+    box-shadow 0.2s,
+    var(--press-transition);
 }
 .palette-option.is-active {
   box-shadow: inset 0 0 0 2px var(--accent);
@@ -696,7 +749,7 @@
 }
 .palette-swatch {
   height: 34px;
-  border-radius: 6px;
+  border-radius: 8px;
   display: flex;
   overflow: hidden;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
@@ -714,19 +767,18 @@
   accent-color: var(--accent);
 }
 .setting-sub {
-  margin: 18px 0 6px;
-  font-size: 12px;
+  margin: 22px 0 6px;
+  font-size: 13px;
   font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-faint);
+  letter-spacing: -0.005em;
+  color: var(--text-secondary);
 }
 .settings-warn {
   display: flex;
   gap: 8px;
   align-items: flex-start;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: 12px;
   background: var(--c-orange);
   font-size: 13px;
   margin: 8px 0;
@@ -766,9 +818,9 @@
 }
 .google-card {
   margin: 14px 0 18px;
-  padding: 14px 16px;
-  border-radius: var(--radius-lg);
-  background: var(--bg-subtle);
+  padding: 16px 18px;
+  border-radius: var(--radius-card);
+  background: var(--card-fill);
   display: flex;
   flex-direction: column;
   gap: 8px;

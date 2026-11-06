@@ -34,7 +34,7 @@ export function ShapeMenu({ editor, onDone }: { editor: Editor; onDone: () => vo
   const groups = groupLines(linesIn(editor.state.doc, start, end))
   const best = suggestShape(groups)
   return (
-    <div className="menu turn-menu shape-menu" onMouseDown={(e) => e.preventDefault()}>
+    <div className="popover menu turn-menu shape-menu" onMouseDown={(e) => e.preventDefault()}>
       <div className="menu-title">{summary(groups)}</div>
       {SHAPES.map((s) => (
         <button

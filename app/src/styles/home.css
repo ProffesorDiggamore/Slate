@@ -1,0 +1,1004 @@
+/* Home: the bento of today. Loaded after the global stylesheets; selectors that
+   override a global rule carry one extra class so they win in either order.
+   Every shared token is read with a fallback so Home still looks right if a
+   palette hasn't defined the newer ones. */
+
+.page.home {
+  --home-card-bg: var(--card-bg, var(--bg-elevated));
+  --home-card-fill: var(--card-fill, var(--bg-subtle));
+  --home-card-border: var(--card-border, var(--border));
+  --home-bouncy: var(--spring-bouncy, cubic-bezier(0.34, 1.32, 0.64, 1));
+  --home-snappy: var(--spring-snappy, cubic-bezier(0.22, 1, 0.36, 1));
+  --home-ease: var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1));
+  --home-gap: 12px;
+  position: relative;
+  isolation: isolate;
+}
+
+.page.home .page-inner {
+  position: relative;
+  max-width: calc(680px + 2 * 96px);
+  padding-bottom: 56px;
+}
+
+/* --------------------------------------------------- shared-class fallbacks */
+/* Zero-specificity stand-ins for classes base.css owns, so Home renders on its
+   own; base.css's real rules win wherever both exist. */
+
+:where(.ambient-glow) {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 240px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+button:where(.circle-btn) {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--home-card-border);
+  background: var(--home-card-bg);
+  color: var(--text);
+}
+
+@media (max-width: 760px) {
+  button:where(.circle-btn) {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* ------------------------------------------------------------------ header */
+
+.home-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 44px;
+}
+
+.home-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.home-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.home-dateline {
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-actions {
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+
+.home-title {
+  margin: 26px 2px 22px;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.14;
+  color: var(--text);
+}
+
+/* Two lines, never more: each truncates on its own. */
+.home-title > span {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-title-sub {
+  color: var(--text-secondary);
+}
+
+/* ------------------------------------------------------------------- cards */
+
+.home-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid var(--home-card-border);
+  background: var(--home-card-bg);
+  color: var(--text);
+  text-align: left;
+}
+
+.home-card.is-filled {
+  background: var(--home-card-fill);
+  border-color: transparent;
+}
+
+/* Press: a quick squeeze down, then a springy release. Uses the separate
+   `scale` property, like base.css's shared press rule, so the two agree and
+   the entrance animation's transform never fights it. */
+.home-press {
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    scale var(--dur-bouncy, 0.7s) var(--home-bouncy),
+    border-color 0.2s,
+    box-shadow 0.25s var(--home-ease);
+}
+
+.home-press:active {
+  scale: var(--press-scale, 0.96);
+  transition-duration: 80ms;
+  transition-timing-function: ease-out;
+}
+
+/* Full-width and row-like things only give a little. */
+.home-ask,
+.home-todo-text,
+.home-agenda-row {
+  --press-scale: 0.985;
+}
+
+@media (hover: hover) {
+  .home-press:hover {
+    border-color: var(--border-strong);
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.06);
+  }
+}
+
+.home-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  align-self: flex-start;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.home-label svg {
+  flex: none;
+  color: var(--text-secondary);
+}
+
+.home-label-btn {
+  margin: -6px -8px -2px;
+  padding: 6px 8px;
+  border-radius: 10px;
+}
+
+@media (hover: hover) {
+  .home-label-btn:hover {
+    color: var(--text);
+  }
+}
+
+.home-count {
+  min-width: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--bg-active);
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-meta {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-link {
+  align-self: flex-start;
+  padding: 4px 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------- ask card */
+
+.home-card.home-ask {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 14px 14px 16px;
+  margin-bottom: var(--home-gap);
+  box-shadow: inset 0 0 28px color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.home-ask .orb {
+  flex: none;
+}
+
+.home-ask-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.home-ask-title {
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.home-ask-sub {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-ask-go {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--home-card-border);
+  color: var(--text-secondary);
+  transition: transform var(--dur-bouncy, 0.7s) var(--home-bouncy);
+}
+
+@media (hover: hover) {
+  .home-ask:hover .home-ask-go {
+    transform: translate(2px, -2px);
+    color: var(--accent);
+  }
+}
+
+/* ------------------------------------------------------------------- bento */
+
+.home-bento {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--home-gap);
+  align-items: stretch;
+}
+
+.home-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--home-gap);
+  min-width: 0;
+}
+
+.home-card.home-today {
+  flex: 1;
+  min-height: 150px;
+}
+
+/* The preview fills the card (it stretches to the To-do card's height) and
+   fades out at the bottom instead of stopping short. */
+.home-lines {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--text-body, var(--text));
+  -webkit-mask-image: linear-gradient(#000 75%, transparent);
+  mask-image: linear-gradient(#000 75%, transparent);
+}
+
+.home-lines > span {
+  flex: none;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.home-lines > span:first-child {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* A new day: the empty card is a clear call to start the page. */
+.home-today-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.home-today-plus {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.home-today .home-meta {
+  margin-top: auto;
+}
+
+/* sync */
+
+.home-card.home-sync {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.home-sync-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-active);
+  color: var(--text-secondary);
+}
+
+.home-sync.is-ok .home-sync-icon {
+  background: color-mix(in srgb, var(--ok) 15%, transparent);
+  color: var(--ok);
+}
+
+.home-sync.is-error .home-sync-icon {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.home-sync.is-busy .home-sync-icon {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.home-sync-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.home-sync-title {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-sync-sub {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-sync-sub.is-action {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* to-do */
+
+.home-card.home-todo {
+  gap: 6px;
+  padding-bottom: 14px;
+}
+
+.home-todo-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0 -6px;
+  padding: 0;
+  list-style: none;
+}
+
+.home-todo-row {
+  display: flex;
+  align-items: flex-start;
+  max-height: 80px;
+  border-radius: 12px;
+}
+
+.home-check {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 38px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.home-check input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.home-box {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--home-card-bg);
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    transform var(--dur-bouncy, 0.7s) var(--home-bouncy);
+}
+
+.home-box svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 18;
+  stroke-dashoffset: 18;
+  transform: scale(0.4);
+  opacity: 0;
+  transition:
+    transform var(--dur-bouncy, 0.7s) var(--home-bouncy),
+    stroke-dashoffset 0.32s var(--home-ease) 0.04s,
+    opacity 0.12s;
+}
+
+.home-check input:checked + .home-box {
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+
+.home-check input:checked + .home-box svg {
+  transform: none;
+  stroke-dashoffset: 0;
+  opacity: 1;
+}
+
+.home-check:active .home-box {
+  transform: scale(0.82);
+  transition-duration: 80ms;
+}
+
+.home-check input:focus-visible + .home-box {
+  outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.home-todo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+  padding: 9px 6px 9px 0;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.32;
+  color: var(--text);
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.home-todo-label {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  text-decoration: line-through;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1.5px;
+  transition:
+    color 0.25s,
+    text-decoration-color 0.25s;
+}
+
+.home-todo-row.is-done .home-todo-label {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+
+.home-due {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.home-due.is-overdue {
+  color: var(--danger);
+}
+
+.home-due.is-today {
+  color: var(--accent);
+}
+
+/* A ticked task folds away after its moment of glory. */
+.home-todo-row.is-leaving {
+  overflow: hidden;
+  animation: home-row-out 0.38s var(--home-ease) forwards;
+}
+
+@keyframes home-row-out {
+  to {
+    opacity: 0;
+    max-height: 0;
+    transform: translateX(10px);
+  }
+}
+
+.home-todo-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-height: 96px;
+  font-size: 15px;
+}
+
+.home-todo-empty span {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.home-todo-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  margin-top: auto;
+}
+
+/* schedule */
+
+.home-card.home-agenda {
+  grid-column: 1 / -1;
+  gap: 6px;
+}
+
+/* One grid for every row (rows share its columns), so titles line up however
+   long each time range is. */
+.home-agenda-list {
+  display: grid;
+  /* auto (not 3px) so the edge tracks make room for each row's padding. */
+  grid-template-columns: auto max-content minmax(0, 1fr) auto;
+  column-gap: 10px;
+  margin: 0 -8px;
+}
+
+.home-agenda-row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  column-gap: 10px;
+  align-items: center;
+  min-height: 40px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  text-align: left;
+  font-size: 14px;
+  color: var(--text);
+  transition: background-color 0.15s;
+}
+
+@media (hover: hover) {
+  .home-agenda-row:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.home-agenda-bar {
+  flex: none;
+  align-self: stretch;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.home-agenda-bar.is-note {
+  background: var(--border-strong);
+}
+
+.home-agenda-time {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Older engines without subgrid: each row lays itself out. */
+@supports not (grid-template-columns: subgrid) {
+  .home-agenda-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .home-agenda-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .home-agenda-time {
+    min-width: 7.8em;
+  }
+}
+
+.home-agenda-title {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-agenda-src {
+  flex: none;
+  color: var(--text-faint);
+}
+
+.home-agenda-connect {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--home-card-border);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+/* ---------------------------------------------------------------- sections */
+
+.home-block {
+  margin-top: 30px;
+}
+
+.home-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 34px;
+  margin: 0 2px 10px;
+}
+
+.home-block-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.home-pager {
+  display: flex;
+  gap: 6px;
+}
+
+/* Touch screens swipe the row; the arrows are for mice. */
+@media (hover: none) {
+  .home-pager {
+    display: none;
+  }
+}
+
+/* recent */
+
+.home-recent {
+  display: flex;
+  gap: var(--home-gap);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  /* Room for the press squeeze and hover shadow so they aren't clipped. */
+  padding: 4px 2px 10px;
+  margin: -4px -2px -10px;
+}
+
+.home-card.home-recent-card {
+  flex: 0 0 196px;
+  gap: 6px;
+  min-height: 176px;
+  padding: 14px;
+  scroll-snap-align: start;
+}
+
+.home-recent-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-bottom: 2px;
+  border-radius: 9px;
+  background: var(--home-card-fill);
+  color: var(--text-secondary);
+}
+
+.home-recent-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.home-recent-preview {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.home-recent-preview svg {
+  vertical-align: -1px;
+}
+
+.home-recent-card .home-meta {
+  margin-top: auto;
+}
+
+/* empty vault */
+
+.home-card.home-empty {
+  margin-top: 30px;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 20px;
+}
+
+.home-empty strong {
+  font-size: 17px;
+}
+
+.home-empty span {
+  color: var(--text-secondary);
+}
+
+.home-empty .btn {
+  margin-top: 8px;
+}
+
+/* folders */
+
+.home-folders {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--home-gap);
+}
+
+.home-card.home-folder {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.home-folder-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.home-folder-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.home-folder-name {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --------------------------------------------------------------- entrance */
+/* Text rises in with the shared fade-up; cards spring in with a touch of scale.
+   `backwards` (not `both`) so a finished entrance doesn't pin transform and
+   swallow the press squeeze. */
+
+.home-in {
+  animation: fade-up var(--dur-snappy, 0.45s) var(--home-snappy) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+.home-pop {
+  animation: home-card-in var(--dur-bouncy, 0.7s) var(--home-bouncy) backwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+@keyframes home-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-in,
+  .home-pop {
+    animation: none;
+  }
+
+  /* Still acknowledge a tap, just without movement. */
+  .home-press:active {
+    scale: none;
+    opacity: 0.7;
+  }
+
+  .home-check:active .home-box {
+    transform: none;
+  }
+}
+
+/* Desktop: the page scrolls below an opaque top bar, so the blobs sit low
+   enough to fade out before that edge instead of being cut along it. */
+@media (min-width: 761px) {
+  .page.home .ambient-glow::before {
+    top: 0;
+  }
+
+  .page.home .ambient-glow::after {
+    top: 16px;
+  }
+}
+
+/* ------------------------------------------------------------------ phone */
+
+@media (max-width: 760px) {
+  .page.home {
+    --home-gap: 10px;
+  }
+
+  .page.home .page-inner {
+    padding-bottom: 32px;
+  }
+
+  /* The floating top bar is only a status-bar strip here, so the header
+     clears the clock itself and the glow runs up under it. */
+  .home-top {
+    padding-top: calc(14px + var(--safe-top));
+  }
+
+  /* "+N more", "Open today's note"… look small but take a full-size tap. */
+  .home-link {
+    position: relative;
+  }
+
+  .home-link::after {
+    content: '';
+    position: absolute;
+    inset: -10px -8px;
+  }
+
+  .home-title {
+    margin: 20px 2px 18px;
+    font-size: 30px;
+  }
+
+  /* Only the most pressing part of the summary fits on a phone. */
+  .home-title-sub .is-extra {
+    display: none;
+  }
+
+  .home-card {
+    padding: 14px;
+  }
+
+  .home-card.home-sync {
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .home-sync-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .home-check {
+    width: 38px;
+    height: 44px;
+  }
+
+  .home-todo-text {
+    padding-block: 12px;
+  }
+
+  .home-ask-sub {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+    line-height: 1.3;
+  }
+
+  /* The recent row runs edge to edge and snaps to the page gutter. */
+  .home-recent {
+    margin-inline: calc(-16px - var(--safe-left)) calc(-16px - var(--safe-right));
+    padding-inline: calc(16px + var(--safe-left)) calc(16px + var(--safe-right));
+    scroll-padding-inline: calc(16px + var(--safe-left));
+  }
+
+  .home-card.home-recent-card {
+    flex-basis: 168px;
+    min-height: 164px;
+  }
+
+  .home-card.home-folder {
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .home-folder-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+  }
+}

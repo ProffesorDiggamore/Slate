@@ -19,12 +19,16 @@
 
 # Privacy lock. The site is only the app: every visitor's notes live in their own
 # browser and their own GitHub repo. This policy makes the browser refuse to send
-# anything anywhere else — GitHub's API, and Google's Calendar API only for people
-# who connect it. No analytics, no ads, no third-party scripts, no inline scripts.
+# anything anywhere else — GitHub's API, Google's Calendar API only for people
+# who connect it, and the AI services only for people who add their own key
+# (OpenAI, Anthropic, Google Gemini, OpenRouter, Groq, Mistral, DeepSeek, xAI, or
+# Ollama / LM Studio running on their own computer). Keep the AI list in step with
+# WEB_ALLOWED_AI_HOSTS in app/src/lib/native.ts.
+# No analytics, no ads, no third-party scripts, no inline scripts.
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://api.github.com https://www.googleapis.com https://oauth2.googleapis.com; worker-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://api.github.com https://www.googleapis.com https://oauth2.googleapis.com https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com https://openrouter.ai https://api.groq.com https://api.mistral.ai https://api.deepseek.com https://api.x.ai http://localhost:* http://127.0.0.1:*; worker-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
     Referrer-Policy = "no-referrer"
     X-Content-Type-Options = "nosniff"
     Permissions-Policy = "camera=(), geolocation=(), payment=(), usb=(), interest-cohort=(), browsing-topics=()"

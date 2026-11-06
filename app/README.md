@@ -160,6 +160,10 @@ npm run typecheck
 npm run build      # production build in dist/ (with offline service worker)
 ```
 
+The App Store app (iPhone, iPad, Apple-silicon Mac) is the same code wrapped with Capacitor in `ios/`:
+`npm run build:ios`, then `npm run open:ios`. Signing, upload and the store listing are in
+[ios/app-store/README.md](ios/app-store/README.md).
+
 To try Google Calendar locally, put `VITE_GOOGLE_CLIENT_ID=…` in `app/.env.local` (see `.env.example`).
 
 Stack: React 19, TipTap 3 (ProseMirror), Vite 8, vite-plugin-pwa, zustand, IndexedDB.

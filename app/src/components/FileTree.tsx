@@ -80,7 +80,9 @@ function buildTree(paths: string[], folders: string[]): TreeNode[] {
 export function newNoteIn(folder: string) {
   const path = createNote({ folder })
   if (folder) setSettings((s) => ({ expanded: [...new Set([...s.expanded, ...ancestors(path)])] }))
-  openNote(path)
+  // Instant: the new page puts the cursor in its title, and iOS only raises the
+  // keyboard for a focus made inside the tap. A page transition draws it a frame later.
+  openNote(path, { instant: true })
   return path
 }
 

@@ -1,6 +1,7 @@
 import { Lock, LockOpen, ScanFace } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { faceIdAvailable, faceIdEnrolled, faceIdName, forgetFaceId } from '../lib/biometric'
+import { isNativeApp } from '../lib/native'
 import { lockNow, useLock } from '../lib/crypto'
 import { useLockedPaths } from '../lib/hooks'
 import { ensureUnlocked, turnOnFaceId } from './EncryptedNote'
@@ -50,7 +51,7 @@ export function EncryptionSettings() {
             </strong>
             <p className="muted small">
               {faceOn
-                ? `On for this device. Your passphrase is kept sealed by a passkey that only opens with ${faceIdName()} or your device passcode.`
+                ? `On for this device. Your passphrase is kept sealed by ${isNativeApp ? 'this device’s Keychain' : 'a passkey'}, and only opens with ${faceIdName()} or your device passcode.`
                 : `Open encrypted pages with ${faceIdName()} or your device passcode instead of typing the passphrase. Set up once per device.`}
             </p>
           </div>
